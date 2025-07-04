@@ -1,5 +1,6 @@
 #include "MotorControl.h"
 #include <Arduino.h>
+#include<SerialTools.h>
 
 Motor::Motor(int in1, int in2): in1(in1), in2(in2) {
     init();
@@ -54,6 +55,8 @@ void Motor::update_speed() {
 
 void Motor::set_speed(int spd) {
     target_speed = spd;
+    uint8_t response[] = {0xFF, callback_byte, 0x00, 0x0A};
+    send_bytes(response, 4);
     return;
 }
 

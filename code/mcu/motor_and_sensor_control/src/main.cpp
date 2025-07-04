@@ -78,8 +78,10 @@ void encoderISR_R() {
 void setup() {
     Serial.begin(115200);
     motorL = new Motor(MOTOR_L1, MOTOR_L2, ENCODER_LA, ENCODER_LB, encoderISR_L);
-    // motorR = new Motor(MOTOR_R1, MOTOR_R2, ENCODER_RA, ENCODER_RB, encoderISR_R);
-    Serial.println("Ready. Send speed:");
+    motorL->set_callback_byte(0xA1);
+    motorR = new Motor(MOTOR_R1, MOTOR_R2, ENCODER_RA, ENCODER_RB, encoderISR_R);
+    motorR->set_callback_byte(0xA2);
+    // Serial.println("Ready. Send speed:");
 }
 
 void loop() {

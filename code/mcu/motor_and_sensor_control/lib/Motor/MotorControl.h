@@ -2,6 +2,7 @@
 
 #include<Arduino.h>
 
+
 class Motor {
     private:
         // Pin Definition
@@ -37,6 +38,9 @@ class Motor {
         // init
         void init();
 
+        // Serial command callback
+        uint8_t callback_byte;
+
     public:
         // Construction
         Motor(int in1, int in2); // Without encoder
@@ -44,8 +48,8 @@ class Motor {
         Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)(), int mode=CHANGE); // With encoder and ISR
 
         // Public Function Call
-
         void attach_interrupt_isr(void (*isr)(), int mode=CHANGE);
+        void set_callback_byte(uint8_t callback_byte) { this->callback_byte = callback_byte; }
 
         void set_speed(int inp);
         double get_current_speed();
