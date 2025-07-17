@@ -1,16 +1,19 @@
 #include "MotorControl.h"
 #include <Arduino.h>
 #include<SerialTools.h>
+#include <TimerOne.h>
 
 Motor::Motor(int in1, int in2): in1(in1), in2(in2) {
     init();
     return;
 }
 Motor::Motor(int in1, int in2, int encoderA, int encoderB): in1(in1), in2(in2), encoderA(encoderA), encoderB(encoderB) {
+    have_encoder_pin = true;
     init();
     return;
 }
 Motor::Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)()): in1(in1), in2(in2), encoderA(encoderA), encoderB(encoderB) {
+    have_encoder_pin = true;
     init();
     attach_interrupt_isr(isr);
     return;
@@ -27,18 +30,20 @@ void Motor::init() {
 }
 
 void Motor::encoder() {
-    if(digitalRead(encoderA) == LOW) {
-        return;
+    static bool lastA = LOW;
+    bool A = digitalRead(encoderA);
+    bool B = digitalRead(encoderB);
+
+    if (A != lastA && A == HIGH) {  // A 腳 rising edge
+        if (B == LOW) {
+            encoderPos++;
+        } else {
+            encoderPos--;
+        }
     }
-    int encoder_a_val = digitalRead(encoderA);
-    int encoder_b_val = digitalRead(encoderB);
-    if(encoder_a_val == encoder_b_val) {
-        encoderPos++;
-    }else {
-        encoderPos--;
-    }
-    return;
+    lastA = A;
 }
+
 
 void Motor::attach_interrupt_isr(void (*isr)()) {
     attachInterrupt(digitalPinToInterrupt(encoderA), isr, CHANGE);
@@ -48,7 +53,7 @@ void Motor::attach_interrupt_isr(void (*isr)()) {
 
 void Motor::update_speed() {
     static int last_encoderPos = 0;
-    motor_speed = (last_encoderPos - encoderPos) / (double)((double)read_speed_interval * 0.001) * 60 / 7 / 27; // RPM
+    motor_speed = (encoderPos - last_encoderPos) / (double)(read_speed_interval * 0.001) * 60.0 / 7.0 / 27.0;
     Serial.println(encoderPos);
     last_encoderPos = encoderPos;
     return;

@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <MotorControl.h>
 
-#define MOTOR_L1 3
-#define MOTOR_L2 11
+#define MOTOR_L1 5
+#define MOTOR_L2 6
 #define ENCODER_LA 2
 #define ENCODER_LB 4
 #define MOTOR_R1 9
