@@ -81,6 +81,7 @@ void setup() {
     motorL->set_callback_byte(0xA1);
     motorR = new Motor(MOTOR_R1, MOTOR_R2, ENCODER_RA, ENCODER_RB, encoderISR_R);
     motorR->set_callback_byte(0xA2);
+    motorL->set_speed(150);
     // Serial.println("Ready. Send speed:");
 }
 

@@ -17,14 +17,14 @@ class Motor {
         bool motor_enabled = true;
 
         // Encoder Reading
-        unsigned long read_speed_interval;
-        volatile long encoderPos = 0;
+        unsigned long read_speed_interval = 150;
+        
         double encoderSpeed = 0;
 
         // PID Control constants
-        double kP;
-        double kI;
-        double kD;
+        double kP = 1.5;
+        double kI = 0.0;
+        double kD = 0.0;
         double e_prev = 0;
         double e = 0;
         double e_integral = 0;
@@ -42,13 +42,14 @@ class Motor {
         uint8_t callback_byte;
 
     public:
+        volatile long encoderPos = 0;
         // Construction
         Motor(int in1, int in2); // Without encoder
         Motor(int in1, int in2, int encoderA, int encoderB); // With encoder
-        Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)(), int mode=CHANGE); // With encoder and ISR
+        Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)()); // With encoder and ISR
 
         // Public Function Call
-        void attach_interrupt_isr(void (*isr)(), int mode=CHANGE);
+        void attach_interrupt_isr(void (*isr)());
         void set_callback_byte(uint8_t callback_byte) { this->callback_byte = callback_byte; }
 
         void set_speed(int inp);

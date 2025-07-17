@@ -10,9 +10,9 @@ Motor::Motor(int in1, int in2, int encoderA, int encoderB): in1(in1), in2(in2), 
     init();
     return;
 }
-Motor::Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)(), int mode=CHANGE): in1(in1), in2(in2), encoderA(encoderA), encoderB(encoderB) {
+Motor::Motor(int in1, int in2, int encoderA, int encoderB, void (*isr)()): in1(in1), in2(in2), encoderA(encoderA), encoderB(encoderB) {
     init();
-    attach_interrupt_isr(isr, mode);
+    attach_interrupt_isr(isr);
     return;
 }
 
@@ -40,8 +40,8 @@ void Motor::encoder() {
     return;
 }
 
-void Motor::attach_interrupt_isr(void (*isr)(), int mode) {
-    attachInterrupt(digitalPinToInterrupt(encoderA), isr, mode);
+void Motor::attach_interrupt_isr(void (*isr)()) {
+    attachInterrupt(digitalPinToInterrupt(encoderA), isr, CHANGE);
     have_encoder = true;
     return;
 }
@@ -49,7 +49,8 @@ void Motor::attach_interrupt_isr(void (*isr)(), int mode) {
 void Motor::update_speed() {
     static int last_encoderPos = 0;
     motor_speed = (last_encoderPos - encoderPos) / (double)((double)read_speed_interval * 0.001) * 60 / 7 / 27; // RPM
-    last_encoderPos = encoderPos = 0;
+    Serial.println(encoderPos);
+    last_encoderPos = encoderPos;
     return;
 }
 
