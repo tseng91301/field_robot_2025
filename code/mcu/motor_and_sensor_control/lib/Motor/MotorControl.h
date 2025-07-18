@@ -22,8 +22,8 @@ class Motor {
         double encoderSpeed = 0;
 
         // PID Control constants
-        double kP = 1.5;
-        double kI = 0.0;
+        double kP = 1.2;
+        double kI = 0.004;
         double kD = 0.0;
         double e_prev = 0;
         double e = 0;
