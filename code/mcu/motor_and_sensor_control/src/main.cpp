@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <MotorControl.h>
+#include <Wire.h>
+#include <MPU6050_light.h>
+#include "Accelerator.h"
 
 #define MOTOR_L1 5
 #define MOTOR_L2 6
@@ -12,6 +15,9 @@
 
 Motor *motorL = nullptr;
 Motor *motorR = nullptr;
+
+MPU6050 mpu(Wire);
+Location location(&mpu);
 
 // Byte command handle
 
@@ -77,6 +83,16 @@ void encoderISR_R() {
 
 void setup() {
     Serial.begin(115200);
+
+    Wire.begin();
+    byte status = mpu.begin();
+    if (status != 0) {
+        Serial.println("MPU6050 initialization failed!");
+        while (1);
+    }
+    delay(1000);
+    mpu.calcOffsets();  // 校正零點（請保持靜止）
+
     motorL = new Motor(MOTOR_L1, MOTOR_L2, ENCODER_LA, ENCODER_LB, encoderISR_L);
     motorL->set_callback_byte(0xA1);
     motorR = new Motor(MOTOR_R1, MOTOR_R2, ENCODER_RA, ENCODER_RB, encoderISR_R);
@@ -124,4 +140,7 @@ void loop() {
 
     // 馬達服務
     motorL->service();
+
+    // 位置計算服務
+    location.service();
 }
