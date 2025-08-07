@@ -2,7 +2,7 @@
 #include <MotorControl.h>
 #include <Wire.h>
 #include <MPU6050_light.h>
-#include "Accelerator.h"
+#include <Accelerator.h>
 
 #define MOTOR_L1 5
 #define MOTOR_L2 6

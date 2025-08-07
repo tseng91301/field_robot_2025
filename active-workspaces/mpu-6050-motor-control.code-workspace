@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../code/mcu/MPU6050_test"
+		},
+		{
+			"path": "../code/mcu/motor_and_sensor_control"
+		}
+	],
+	"settings": {}
+}

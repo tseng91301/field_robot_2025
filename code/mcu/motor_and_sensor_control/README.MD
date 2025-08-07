@@ -15,6 +15,9 @@
 * 當接收到的 data byte 數量達到 特定 command 定義的數量，會停止接收，並等待 0x0A，狀態更改為 `WAIT_END`
 * 狀態為 `WAIT_END` 並讀取到 0x0A，將狀態改回 `WAIT_START`，同時執行對應指令
 
+## 專案中的 Git submodules:
+1. `lib/Arduino-IMU-utils`
+
 ## Appendix
 指令架構:
 * 0xA1: 設定左馬達速度 buffer: 2bytes (第一個是正負號，0 為正； 1 為負，第二個是數值 0 ~ 255)
