@@ -1,0 +1,6 @@
+[submodule "code/mcu/motor_and_sensor_control/lib/Arduino-IMU-utils"]
+	path = code/mcu/motor_and_sensor_control/lib/Arduino-IMU-utils
+	url = git@github.com:tseng91301/Arduino-IMU-utils.git
+[submodule "code/mcu/motor_and_sensor_control/lib/Arduino-Motor-utils"]
+	path = code/mcu/motor_and_sensor_control/lib/Arduino-Motor-utils
+	url = git@github.com:tseng91301/Arduino-Motor-utils.git
