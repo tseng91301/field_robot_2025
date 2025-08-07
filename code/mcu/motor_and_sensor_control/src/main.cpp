@@ -19,6 +19,10 @@ Motor *motorR = nullptr;
 MPU6050 mpu(Wire);
 Location location(&mpu);
 
+#define KP 0.1
+#define KI 0.1
+#define KD 0.1
+
 // Byte command handle
 
 #define START_BYTE 0xFF
