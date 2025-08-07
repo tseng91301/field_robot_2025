@@ -17,6 +17,7 @@
 
 ## 專案中的 Git submodules:
 1. `lib/Arduino-IMU-utils`
+2. `lib/Arduino-Motor-utils`
 
 ## Appendix
 指令架構:
