@@ -16,7 +16,7 @@
 
 Motor *motorL = nullptr;
 Motor *motorR = nullptr;
-DualMotor dualMotor(motorL, motorR);
+DualMotor *dualMotor = nullptr;
 
 MPU6050 mpu(Wire);
 Location location(&mpu);
@@ -95,6 +95,8 @@ void setup() {
     
     delay(1000);
     mpu.calcOffsets(); // 校正零點（請保持靜止）
+    Serial.println("Calibrate successfully");
+    delay(1000);
 
     // 初始化馬達腳位和 encoder function
     motorL = new Motor(MOTOR_L1, MOTOR_L2, ENCODER_LA, ENCODER_LB, encoderISR_L);
@@ -102,8 +104,9 @@ void setup() {
     motorL->reversed = true;
     motorR = new Motor(MOTOR_R1, MOTOR_R2, ENCODER_RA, ENCODER_RB, encoderISR_R);
     motorR->set_callback_byte(0xA2);
+    dualMotor = new DualMotor(motorL, motorR);
 
-    dualMotor.speed = 1.0;
+    dualMotor->speed = 1.0;
 }
 
 void loop() {
@@ -122,10 +125,13 @@ void loop() {
     pe = e;
     double correction = KP * e + KI * i + KD * d;
 
-    dualMotor.set_direction(-correction);
+    Serial.print("Direction: ");
+    Serial.println(-correction);
+
+    dualMotor->set_direction(-correction);
 
     // 馬達服務
-    dualMotor.service();
+    dualMotor->service();
 
     // 位置計算服務
     location.service();
