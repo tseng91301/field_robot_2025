@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../code/main_control"
+		},
+		{
+			"path": "../code/mcu/motor_and_sensor_control"
+		}
+	],
+	"settings": {}
+}
