@@ -1,0 +1,1 @@
+from .detectHub import FrameHub, DetectorThread
