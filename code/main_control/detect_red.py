@@ -16,9 +16,11 @@ ie = 0.0
 #Orin NX
 # --- Arduino Serial Setup ---
 try:
-    serial_motor = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
-    motorL = Motor(serial_motor, 0xA1)
-    motorR = Motor(serial_motor, 0xA2)
+    serial_motor = serial.Serial('/dev/arduino_uno-1', 115200, timeout=1)
+    motorL = Motor(serial_motor)
+    motorL.set_command_byte(0xA1)
+    motorR = Motor(serial_motor)
+    motorR.set_command_byte(0xA2)
     motor_dual = DualMotor(motorL, motorR)
     # arduino = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
     time.sleep(2)  # Give Arduino time to reset
@@ -37,23 +39,58 @@ if not cap.isOpened():
     print("❌ Failed to open camera")
     exit()
 
-def find_lane_center(roi, y_offset, frame, color=(0, 255, 0)):
+def find_lane_center_with_slope(roi, y_offset, frame, lane_width=400):
+    """
+    單邊追蹤 + 斜率判斷左右線
+    roi       : 二值化的車道區域
+    y_offset  : ROI 在原圖的起始 y 座標
+    frame     : 原圖，用來畫 debug
+    lane_width: 假設車道寬度
+    """
     contours, _ = cv2.findContours(roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    centers = []
+    left_lines = []
+    right_lines = []
+
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        if w * h > 200:
-            cx = x + w // 2
-            cy = y + h // 2 + y_offset
-            centers.append((cx, cy))
-            cv2.circle(frame, (cx, cy), 5, color, -1)
-    if len(centers) >= 2:
-        centers = sorted(centers, key=lambda p: p[0])
-        left, right = centers[0], centers[-1]
-        lane_center = (left[0] + right[0]) // 2
-        cv2.circle(frame, (lane_center, (left[1] + right[1]) // 2), 6, (255, 0, 0), -1)
-        return lane_center
-    return None
+        if w * h < 200:
+            continue
+        cx = x + w // 2
+        cy = y + h // 2 + y_offset
+
+        # 計算線的斜率
+        if w != 0:
+            slope = h / w  # 用矩形高/寬近似斜率
+        else:
+            slope = float('inf')
+
+        # 判斷左右線
+        if slope < 0.5:  # 假設左線斜率偏小（靠右傾斜）
+            left_lines.append((cx, cy))
+        else:
+            right_lines.append((cx, cy))
+
+        # 畫出中心點
+        cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+
+    # 選最左邊和最右邊的線
+    left_line = min(left_lines, key=lambda p: p[0]) if left_lines else None
+    right_line = max(right_lines, key=lambda p: p[0]) if right_lines else None
+
+    # 單邊追蹤補齊
+    if left_line is None and right_line is not None:
+        left_line = (right_line[0] - lane_width, right_line[1])
+    if right_line is None and left_line is not None:
+        right_line = (left_line[0] + lane_width, left_line[1])
+
+    # 計算車道中心
+    lane_center = None
+    if left_line and right_line:
+        lane_center = (left_line[0] + right_line[0]) // 2
+        cy = (left_line[1] + right_line[1]) // 2
+        cv2.circle(frame, (lane_center, cy), 6, (255, 0, 0), -1)
+
+    return lane_center
 
 while True:
     ret, frame = cap.read()
@@ -86,6 +123,9 @@ while True:
     center_near = find_lane_center(roi_near, int(height * 0.6), frame, (0, 255, 0))
     center_far = find_lane_center(roi_far, int(height * 0.3), frame, (0, 0, 255))
 
+    print("center_near: ", center_near)
+    print("center_far: ", center_far)
+
     if center_near and center_far:
         # Insert PID value
         e = center_far - center_near
@@ -96,23 +136,11 @@ while True:
 
         motor_dual.set_direction(val)
 
-        # if diff > 50:
-        #     curve = "右轉"
-        #     if arduino:
-        #         arduino.write(b'R\n')
-        # elif diff < -50:
-        #     curve = "左轉"
-        #     if arduino:
-        #         arduino.write(b'L\n')
-        # else:
-        #     curve = "直走"
-        #     if arduino:
-        #         arduino.write(b'S\n')
         print("賽道方向:", val)
 
     # Debug display (enable if you have GUI)
-    cv2.imshow("Frame", frame)
-    cv2.imshow("Mask", mask)
+    # cv2.imshow("Frame", frame)
+    # cv2.imshow("Mask", mask)
     if cv2.waitKey(1) & 0xFF == 27:  # ESC to quit
         break
 
