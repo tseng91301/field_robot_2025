@@ -13,6 +13,10 @@ e = 0.0
 pe = 0.0
 ie = 0.0
 
+# 透視轉換的四個位置點(比例)，順序: 左上, 右上, 左下, 右下
+pts_src_config = np.float32([[0.2, 0.15], [0.8, 0.15], [0.0, 1.0], [1.0, 1.0]])
+pts_dst_config = np.float32([[0, 0], [1, 0], [0, 1], [1, 1]])
+
 #Orin NX
 # --- Arduino Serial Setup ---
 try:
@@ -30,7 +34,8 @@ except Exception as e:
     arduino = None
 
 # --- Open Camera ---
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("VID_20250904_211031.mp4")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
@@ -92,6 +97,8 @@ def find_lane_center_with_slope(roi, y_offset, frame, lane_width=400):
 
     return lane_center
 
+cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
+cv2.resizeWindow("Frame", 1280, 720)
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -114,14 +121,28 @@ while True:
     # Morphology to reduce noise
     kernel = np.ones((5, 5), np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    
+    # --- 2. 透視變換 (Bird's-eye) ---
+    # 假設已知四個角點，順序: 左上, 右上, 左下, 右下
+    # 轉換成像素座標
+    pts_src = np.zeros_like(pts_src_config)
+    pts_src[:, 0] = pts_src_config[:, 0] * width  # x
+    pts_src[:, 1] = pts_src_config[:, 1] * height  # y
+    pts_dst = np.zeros_like(pts_dst_config)
+    pts_dst[:, 0] = pts_dst_config[:, 0] * width  # x
+    pts_dst[:, 1] = pts_dst_config[:, 1] * height  # y
+    M = cv2.getPerspectiveTransform(pts_src, pts_dst)
+    mask_bird = cv2.warpPerspective(mask, M, (width, height))
 
     # Regions of Interest (ROI)
-    roi_near = mask[int(height * 0.6):int(height * 0.8), :]
-    roi_far = mask[int(height * 0.3):int(height * 0.5), :]
+    roi_near = mask_bird[int(height * 0.6):int(height * 0.8), :]
+    roi_far = mask_bird[int(height * 0.3):int(height * 0.5), :]
 
     # Find lane centers
-    center_near = find_lane_center(roi_near, int(height * 0.6), frame, (0, 255, 0))
-    center_far = find_lane_center(roi_far, int(height * 0.3), frame, (0, 0, 255))
+    # center_near = find_lane_center_with_slope(roi_near, int(height * 0.6), frame, (0, 255, 0))
+    # center_far = find_lane_center_with_slope(roi_far, int(height * 0.3), frame, (0, 0, 255))
+    center_near = find_lane_center_with_slope(roi_near, int(height * 0.6), frame, 400)
+    center_far = find_lane_center_with_slope(roi_far, int(height * 0.3), frame, 400)
 
     print("center_near: ", center_near)
     print("center_far: ", center_far)
@@ -134,15 +155,20 @@ while True:
         pe = e
         val = int(kP * e + kI * ie + kD * d)
 
-        motor_dual.set_direction(val)
+        # motor_dual.set_direction(val)
 
         print("賽道方向:", val)
 
     # Debug display (enable if you have GUI)
-    # cv2.imshow("Frame", frame)
+    cv2.imshow("Frame", frame)
     # cv2.imshow("Mask", mask)
     if cv2.waitKey(1) & 0xFF == 27:  # ESC to quit
         break
+
+    while True:
+        if cv2.waitKey(1) & 0xFF == 13:  
+            break
+
 
 cap.release()
 cv2.destroyAllWindows()
