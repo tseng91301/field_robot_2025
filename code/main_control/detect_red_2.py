@@ -30,8 +30,8 @@ except Exception as e:
     motor_dual = None
 
 # --- Open Camera ---
-cap = cv2.VideoCapture("VID_20250904_211031.mp4")
-# cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture("VID_20250904_211031.mp4")
+cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
