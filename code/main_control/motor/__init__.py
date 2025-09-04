@@ -4,6 +4,7 @@ import math
 class Motor:
     def __init__(self, ser: sc.Serial):
         self.ser = ser
+        self.no_negative_speed = False
         return
 
     def set_command_byte(self, command_byte: int):
@@ -15,6 +16,8 @@ class Motor:
             speed = 255
         elif speed < -255:
             speed = -255
+        if speed < 0 and self.no_negative_speed:
+            speed = 0
         self.speed = speed
         outp = bytearray()
         outp.append(self.command_byte)
@@ -71,6 +74,9 @@ class DualMotor:
         elif (direction > 0 and direction <= 180):
             self.L_weight = math.cos(direction * math.pi / 180.0)
             self.R_weight = 1.0
+
+        # spd = (255 * self.speed * self.L_weight * self.L_calibration, 255 * self.speed * self.R_weight * self.R_calibration)
+        # print(spd)
 
         self.set_speed(255 * self.speed * self.L_weight * self.L_calibration, 255 * self.speed * self.R_weight * self.R_calibration)
         return

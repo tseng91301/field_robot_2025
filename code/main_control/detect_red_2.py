@@ -5,9 +5,10 @@ import time
 from motor import Motor, DualMotor
 
 # --- PID 參數設定 ---
-kP = 0.1
-kI = 0.0
-kD = 0.0
+kP = 0.1 # TODO: 更改數值
+kI = 0.0 # TODO: 更改數值
+kD = 0.0 # TODO: 更改數值
+
 pe, ie = 0.0, 0.0
 
 # --- 透視轉換的比例座標 ---
@@ -18,8 +19,8 @@ pts_dst = np.float32([[0,0],[bird_width,0],[0,bird_height],[bird_width,bird_heig
 # --- Arduino Serial Setup ---
 try:
     serial_motor = serial.Serial('/dev/arduino_uno-1', 115200, timeout=1)
-    motorL = Motor(serial_motor); motorL.set_command_byte(0xA1)
-    motorR = Motor(serial_motor); motorR.set_command_byte(0xA2)
+    motorL = Motor(serial_motor); motorL.set_command_byte(0xA1); motorL.no_negative_speed = True
+    motorR = Motor(serial_motor); motorR.set_command_byte(0xA2); motorR.no_negative_speed = True
     motor_dual = DualMotor(motorL, motorR)
     time.sleep(2)
     print("✅ Arduino connected")
@@ -30,12 +31,15 @@ except Exception as e:
 
 # --- Open Camera ---
 cap = cv2.VideoCapture("VID_20250904_211031.mp4")
+# cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 last_x_left = None
 lane_width = 200  # bird’s-eye view 車道寬度像素
 window_size = 5   # 局部滑動平均範圍
+
+motor_dual.speed = 1.0
 
 while True:
     ret, frame = cap.read()
@@ -49,6 +53,7 @@ while True:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # --- 紅色遮罩 ---
+    # TODO 修改數值讓他能在草皮上看到紅繩
     lower_red1 = np.array([0, 100, 100]); upper_red1 = np.array([8, 255, 255])
     lower_red2 = np.array([172, 100, 100]); upper_red2 = np.array([180, 255, 255])
     mask = cv2.inRange(hsv, lower_red1, upper_red1) | cv2.inRange(hsv, lower_red2, upper_red2)
@@ -119,23 +124,31 @@ while True:
             cv2.line(frame, tuple(pts_back[i-1][0]), tuple(pts_back[i][0]), (0,255,0), 2)
 
         # --- PID 控制 ---
-        x_center = pts_back[-1,0,0]
-        error = (width//2 - x_center)
-        de = error - pe
-        ie += error
-        pe = error
-        output = kP*error + kI*ie + kD*de
+        # --- PID 控制 (改用 centers_smooth 全部平均) ---
+        if len(centers_smooth) > 0:
+            # 取所有 x_center 的平均
+            x_avg = np.mean(centers_smooth[:,0])
+            
+            # error = 平均中線 - 200 (假設 200 是車道中間)
+            error = x_avg - 200
 
-        if motor_dual:
-            motor_dual.move(output)
+            de = error - pe
+            ie += error
+            pe = error
+            output = -(kP*error + kI*ie + kD*de)
+
+            if motor_dual:
+                motor_dual.set_direction(output)
 
     cv2.imshow("Frame", frame)
     cv2.imshow("Red Mask", mask)
     if cv2.waitKey(1) & 0xFF == 27:
         break
-    while True:
-        if cv2.waitKey(1) & 0xFF == 13:
-            break
+
+    time.sleep(0.05)
+    # while True:
+    #     if cv2.waitKey(1) & 0xFF == 13:
+    #         break
 
 cap.release()
 cv2.destroyAllWindows()
