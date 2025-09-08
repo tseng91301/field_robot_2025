@@ -7,3 +7,6 @@
 [submodule "code/mcu/motor_and_sensor_control/lib/Arduino-Serial-Utils"]
 	path = code/mcu/motor_and_sensor_control/lib/Arduino-Serial-Utils
 	url = git@github.com:tseng91301/Arduino-Serial-Utils.git
+[submodule "code/mcu/cup_control/lib/Arduino-Serial-Utils"]
+	path = code/mcu/cup_control/lib/Arduino-Serial-Utils
+	url = git@github.com:tseng91301/Arduino-Serial-Utils.git

@@ -5,6 +5,10 @@
 		},
 		{
 			"path": "../code/mcu/motor_and_sensor_control"
+		},
+		{
+			"name": "cup_control",
+			"path": "../code/mcu/cup_control"
 		}
 	],
 	"settings": {}
