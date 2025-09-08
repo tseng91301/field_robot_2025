@@ -3,11 +3,12 @@ import numpy as np
 import serial
 import time
 from motor import Motor, DualMotor
+from serial_connection import Serial
 
 # --- PID 參數設定 ---
-kP = 0.1 # TODO: 更改數值
-kI = 0.0 # TODO: 更改數值
-kD = 0.0 # TODO: 更改數值
+kP = 0.7 # TODO: 更改數值
+kI = 0.001 # TODO: 更改數值
+kD = 0.01 # TODO: 更改數值
 
 pe, ie = 0.0, 0.0
 
@@ -18,11 +19,11 @@ pts_dst = np.float32([[0,0],[bird_width,0],[0,bird_height],[bird_width,bird_heig
 
 # --- Arduino Serial Setup ---
 try:
-    serial_motor = serial.Serial('/dev/arduino_uno-1', 115200, timeout=1)
+    serial_motor = Serial('/dev/arduino_uno-1', 115200)
     motorL = Motor(serial_motor); motorL.set_command_byte(0xA1); motorL.no_negative_speed = True
     motorR = Motor(serial_motor); motorR.set_command_byte(0xA2); motorR.no_negative_speed = True
     motor_dual = DualMotor(motorL, motorR)
-    time.sleep(2)
+    time.sleep(1)
     print("✅ Arduino connected")
 except Exception as e:
     print("❌ Arduino connection failed:", e)
@@ -40,7 +41,7 @@ last_x_left = None
 lane_width = 200  # bird’s-eye view 車道寬度像素
 window_size = 5   # 局部滑動平均範圍
 
-motor_dual.speed = 1.0
+motor_dual.speed = 0.35
 
 while True:
     ret, frame = cap.read()
@@ -133,6 +134,8 @@ while True:
             # error = 平均中線 - 200 (假設 200 是車道中間)
             error = x_avg - 200
 
+            print(error)
+
             de = error - pe
             ie += error
             pe = error
@@ -141,8 +144,8 @@ while True:
             if motor_dual:
                 motor_dual.set_direction(output)
 
-    cv2.imshow("Frame", frame)
-    cv2.imshow("Red Mask", mask)
+    # cv2.imshow("Frame", frame)
+    # cv2.imshow("Red Mask", mask)
     if cv2.waitKey(1) & 0xFF == 27:
         break
 

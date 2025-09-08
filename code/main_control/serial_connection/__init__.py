@@ -80,3 +80,5 @@ class Serial:
         if hasattr(self, 'thread'):
             self.thread.join()
         self.ser.close()
+    def close(self):
+        self.ser.close()
