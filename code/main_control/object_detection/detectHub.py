@@ -4,6 +4,7 @@ import time
 import numpy as np
 
 from . import configuration
+from ultralytics import YOLO
 
 class FrameHub:
     def __init__(self):
@@ -33,14 +34,17 @@ class FrameHub:
             ret = tuple()
             if configuration.DEBUG_MODE:
                     if self.result_available and (self.result is not None):
-                        for (x, y, w, h) in self.result:
-                            cv2.rectangle(self.frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                        for (x, y, w, h, label, confidence) in self.result:
+                            cv2.rectangle(self.frame, (x, y), (x+w, y+h), (0, 0, 255), 5)
+                            cv2.putText(self.frame, f'{label} {confidence:.2f}', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
             if not self.result_available:
                 ret = (False, None)
             else:
                 self.result_available = False
                 ret = (True, self.result)
-            cv2.imshow("Detection result", self.frame)
+            if configuration.DEBUG_MODE:
+                cv2.imshow("Detection result", self.frame)
+                pass
             return ret
 
 
@@ -50,21 +54,26 @@ class DetectorThread(threading.Thread):
         self.hub = hub
         self.running = True
         self.processing = False
+        self.model = YOLO(configuration.model_path)
 
     def run(self):
         while self.running:
             frame = self.hub.get_frame()
+            detect_boxes = []
             if frame is not None and self.hub.new_frame:
-                # 模擬：做影像辨識 (這裡用臉部辨識做範例)
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-                faces = detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-
-                # 確保回傳 numpy.ndarray，不是 list
-                if faces is None or len(faces) == 0:
-                    faces = np.empty((0, 4), dtype=int)
-
-                self.hub.set_result(faces)
+                detect_result = self.model(frame)
+                # 顯示結果
+                for result in detect_result:
+                    boxes = result.boxes
+                    # print(f'Detected {len(boxes)} objects')
+                    for box in boxes:
+                        # 將張量轉換為標量
+                        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                        label = self.model.names[int(box.cls.item())]
+                        confidence = box.conf.item()
+                        detect_boxes.append((x1, y1, x2-x1, y2-y1, label, confidence))
+                
+                self.hub.set_result(detect_boxes)
             else:
                 time.sleep(0.01)  # 沒新 frame → 稍微休息
 
