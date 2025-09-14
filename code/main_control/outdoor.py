@@ -10,6 +10,8 @@ kP = 0.7 # TODO: 更改數值
 kI = 0.001 # TODO: 更改數值
 kD = 0.01 # TODO: 更改數值
 
+LINE_OFFSET = 50 # 循線時要篇移的距離(鏡頭看到的畫數)
+
 pe, ie = 0.0, 0.0
 
 # --- 透視轉換的比例座標 ---
@@ -133,6 +135,7 @@ while True:
 
             # error = 平均中線 - 200 (假設 200 是車道中間)
             error = x_avg - 200
+            error -= LINE_OFFSET
 
             print(error)
 

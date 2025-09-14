@@ -15,12 +15,14 @@ class LineFollower:
         self.pid = PID(LineFollowConfig.KP, LineFollowConfig.KI, LineFollowConfig.KD)
         self.angles_buf = deque(maxlen=LineFollowConfig.SMOOTH_N)
         self.offsets_buf = deque(maxlen=LineFollowConfig.SMOOTH_N)
+        self.offset_cal = 0 # 循跡時要偏移的距離(左負右正)
 
     def follow(self, frame):
         roi, (rx, ry, rw, rh) = proportional_roi(frame)
         mask = red_mask_hsv(roi)
 
         angle_rad, offset_norm, cx, cy = find_line_angle_and_offset(mask)
+        offset_norm -= self.offset_cal # 減去需要的篇移量
 
         if angle_rad is None:
             # 找不到線：策略
