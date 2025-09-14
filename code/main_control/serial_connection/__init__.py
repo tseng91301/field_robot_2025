@@ -1,6 +1,7 @@
 import time
 import serial
 import threading
+import asyncio
 
 from .commands import ParseState, commands_len
 from .command_handler import process_command
@@ -16,6 +17,7 @@ class Serial:
         self.state = ParseState.WAIT_START
         self.command = None
         self.read_buffer = bytearray()
+        self.readLock = asyncio.Lock()
         pass
 
     def send_bytes(self, bytes_inp: bytearray):
@@ -29,6 +31,21 @@ class Serial:
         outp.append(0x0A)
         self.ser.write(outp)
         return
+    
+    async def read_bytes(self, length: int, timeout: float = None):
+        async with self.readLock:
+            buffer = bytearray()
+            start = asyncio.get_event_loop().time()
+            while len(buffer) < length:
+                n = self.ser.in_waiting
+                if n:
+                    need = length - len(buffer)
+                    buffer.extend(self.ser.read(min(n, need)))
+                if timeout and asyncio.get_event_loop().time() - start > timeout:
+                    raise asyncio.TimeoutError("Serial read timeout")
+                await asyncio.sleep(0.01)
+            return buffer
+
 
     def add_listener(self, callback):
         """註冊事件處理器"""
