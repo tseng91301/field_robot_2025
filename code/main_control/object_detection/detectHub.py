@@ -38,7 +38,7 @@ class FrameHub:
                             cv2.rectangle(self.frame, (x, y), (x+w, y+h), (0, 0, 255), 5)
                             cv2.putText(self.frame, f'{label} {confidence:.2f}', (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
             if not self.result_available:
-                ret = (False, None)
+                ret = (False, [])
             else:
                 self.result_available = False
                 ret = (True, self.result)
@@ -61,7 +61,7 @@ class DetectorThread(threading.Thread):
             frame = self.hub.get_frame()
             detect_boxes = []
             if frame is not None and self.hub.new_frame:
-                detect_result = self.model(frame)
+                detect_result = self.model(frame, verbose=False, show=False)
                 # 顯示結果
                 for result in detect_result:
                     boxes = result.boxes
@@ -96,11 +96,9 @@ def main():
 
             # 主程式送 frame 給辨識節點
             if not hub.new_frame:
-                # print("update frame")
                 hub.update_frame(frame)
                 pass
             else:
-                # print("pending...")
                 pass
 
             # 主程式讀取最新結果
