@@ -55,6 +55,14 @@ class DetectorThread(threading.Thread):
         self.running = True
         self.processing = False
         self.model = YOLO(configuration.model_path)
+        self.limitDetect = False
+        self.detect_objects = []
+        return
+
+    def set_detect_objects(self, objects: list):
+        self.detect_objects = objects
+        self.limitDetect = True
+        return
 
     def run(self):
         while self.running:
@@ -65,11 +73,12 @@ class DetectorThread(threading.Thread):
                 # 顯示結果
                 for result in detect_result:
                     boxes = result.boxes
-                    # print(f'Detected {len(boxes)} objects')
                     for box in boxes:
                         # 將張量轉換為標量
-                        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                         label = self.model.names[int(box.cls.item())]
+                        if self.limitDetect and label not in self.detect_objects: # 辨識到的物件不在需要辨識的物件範圍內
+                            continue
+                        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                         confidence = box.conf.item()
                         detect_boxes.append((x1, y1, x2-x1, y2-y1, label, confidence))
                 

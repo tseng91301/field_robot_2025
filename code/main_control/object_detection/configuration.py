@@ -1,2 +1,2 @@
 DEBUG_MODE = False
-model_path = "yolov8n.pt"
+model_path = "best.pt"
