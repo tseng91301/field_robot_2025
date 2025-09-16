@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "weight.h"
+#include "led_output.h"
 
 Weight weight(6, 5, -945);
 
@@ -37,6 +38,12 @@ void processCommand(uint8_t cmd, uint8_t* data) {
             delete data;
             break;
         }
+        case 0xB2: { // 設定重量分類 LED 燈顏色
+            uint8_t color = data[0];
+            set_weight_distribute(color);
+            delete data;
+            break;
+        }
         default:
             Serial.println("Unknown command");
             break;
@@ -46,6 +53,7 @@ void processCommand(uint8_t cmd, uint8_t* data) {
 void setup() {
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
+    init_weight_distribute_led();
 }
 
 void loop() {

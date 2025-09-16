@@ -98,3 +98,5 @@ class LineFollower:
             # 疊回 ROI 視覺
             dbg[ry:ry+rh, rx:rx+rw] = cv2.addWeighted(roi_bgr, 0.7, mask_vis, 0.3, 0)
             cv2.imshow("debug", dbg)
+        
+        return angle_avg, offset_avg, u

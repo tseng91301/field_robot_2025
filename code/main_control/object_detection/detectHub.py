@@ -57,11 +57,16 @@ class DetectorThread(threading.Thread):
         self.model = YOLO(configuration.model_path)
         self.limitDetect = False
         self.detect_objects = []
+        self.detect_confidence = 0.8
         return
 
     def set_detect_objects(self, objects: list):
         self.detect_objects = objects
         self.limitDetect = True
+        return
+
+    def set_min_confidence(self, confidence: float):
+        self.detect_confidence = confidence
         return
 
     def run(self):
@@ -76,7 +81,8 @@ class DetectorThread(threading.Thread):
                     for box in boxes:
                         # 將張量轉換為標量
                         label = self.model.names[int(box.cls.item())]
-                        if self.limitDetect and label not in self.detect_objects: # 辨識到的物件不在需要辨識的物件範圍內
+                        if (self.limitDetect and label not in self.detect_objects) or box.conf.item() < self.detect_confidence:
+                            # 辨識到的物件不在需要辨識的物件範圍內，或是信心值不夠
                             continue
                         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                         confidence = box.conf.item()

@@ -10,14 +10,15 @@ class FeedingCup:
         self.now_step = 0 # 目前記錄的步數
         return
     
-    def set_command_byte(self, command_byte: int, read_byte: int):
-        self.command_byte = command_byte # 指令發送的裝置代碼
+    def set_command_byte(self, command_byte_stepper: int, coommand_byte_led: int, read_byte: int):
+        self.command_byte_stepper = command_byte_stepper # 步進馬達指令發送的裝置代碼
         self.read_byte = read_byte # 查看重量的指令代碼
+        self.coommand_byte_led = coommand_byte_led # 分類顯示 LED 的指令代碼
         return
     
     def turn(self, step: int):
         outp = bytearray()
-        outp.append(self.command_byte)
+        outp.append(self.command_byte_stepper)
         outp.append(0x00 if step > 0 else 0x01)
         outp.append(abs(step))
         self.ser.send_command(outp)
@@ -56,5 +57,22 @@ class FeedingCup:
         # 解析 float
         value = struct.unpack('<f', buffer[:4])[0]
         return value
+    
+    def set_led(self, color: int):
+        """
+        呼叫後立即送出開燈指令，並在背景 3 秒後自動關燈。
+        """
+        async def task():
+            outp = bytearray([self.coommand_byte_led, color])
+            self.ser.send_command(outp)
+
+            await asyncio.sleep(3)
+
+            outp = bytearray([self.coommand_byte_led, 0])
+            self.ser.send_command(outp)
+
+        # 建立背景任務，不會阻塞主程式
+        asyncio.create_task(task())
+
     
 
