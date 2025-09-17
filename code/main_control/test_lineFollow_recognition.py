@@ -59,9 +59,15 @@ except Exception as e:
 cap_line_follow = cv2.VideoCapture(CAMERA_OUTDOOR_PATH)
 if not cap_line_follow.isOpened():
     raise Exception(f"❌ Failed to open camera ({CAMERA_OUTDOOR_PATH})")
+cap_line_follow.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap_line_follow.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap_line_follow.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 cap_object_detection = cv2.VideoCapture(CAMERA_INDOOR_PATH)
 if not cap_object_detection.isOpened():
     raise Exception(f"❌ Failed to open camera ({CAMERA_INDOOR_PATH})")
+cap_object_detection.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap_object_detection.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap_object_detection.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
 # Line Following
 line_follower = LineFollower(motorL, motorR)
