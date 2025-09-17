@@ -1,6 +1,6 @@
 import cv2
 
-from line_follow import LineFollower, DummyMotor, StepCounter
+from line_follow import LineFollower, StepCounter
 from object_detection import DetectorThread, FrameHub
 from motor import Motor, DualMotor
 from feeding_cup import FeedingCup
@@ -9,6 +9,8 @@ from serial_connection import Serial
 from level_vars import Level1, Level2
 
 from collections import Counter
+import signal
+import sys
 
 import time
 
@@ -19,6 +21,10 @@ DEBUG_MODE = False
 SERIAL_SIMULATION_MODE = True
 SERIAL_PORT_MOTOR = "/dev/arduino_uno-1"
 SERIAL_PORT_CUP = "/dev/arduino_uno-2"
+# CAMERA_OUTDOOR_PATH = "/dev/webcam_outdoor"
+# CAMERA_INDOOR_PATH = "/dev/webcam_indoor"
+CAMERA_OUTDOOR_PATH = 0
+CAMERA_INDOOR_PATH = 0
 
 # 定義每一關之中要看那些東西
 LOOK_OBJECTS_1 = ["chick", "pig", "cow"]
@@ -50,9 +56,12 @@ except Exception as e:
     raise Exception("❌ Arduino connection failed:", e)
 
 # --- Open Camera ---
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    raise Exception("❌ Failed to open camera")
+cap_line_follow = cv2.VideoCapture(CAMERA_OUTDOOR_PATH)
+if not cap_line_follow.isOpened():
+    raise Exception(f"❌ Failed to open camera ({CAMERA_OUTDOOR_PATH})")
+cap_object_detection = cv2.VideoCapture(CAMERA_INDOOR_PATH)
+if not cap_object_detection.isOpened():
+    raise Exception(f"❌ Failed to open camera ({CAMERA_INDOOR_PATH})")
 
 # Line Following
 line_follower = LineFollower(motorL, motorR)
@@ -62,6 +71,22 @@ step_count = StepCounter()
 hub = FrameHub()
 detector = DetectorThread(hub)
 detector.start()
+
+# 程式結束時的釋放資源
+def cleanUp():
+    motorL.set_speed(0)
+    motorR.set_speed(0)
+    if serial_motor:
+        serial_motor.close()
+    if serial_cup:
+        serial_cup.close()
+    cap_object_detection.release()
+    cap_line_follow.release()
+    cv2.destroyAllWindows()
+    print("Process has been terminated safely with value 0.")
+    sys.exit(0)
+signal.signal(signal.SIGINT, cleanUp)  # 捕獲 Ctrl+C
+signal.signal(signal.SIGTERM, cleanUp)  # 捕獲終止信號
 
 try:
     with Live(refresh_per_second=10) as live:
@@ -74,20 +99,27 @@ try:
             detection_table.add_column("Label", style="cyan", no_wrap=True)
             detection_table.add_column("Count", style="magenta")
             try:
-                ret, frame = cap.read()
-                if ret:
-                    cap_frame = frame
+                ret_line_follow, frame_line_follow = cap_line_follow.read()
+                if ret_line_follow:
+                    pass
                 else:
-                    print("❌ Video loading failed")
+                    print("❌ Video (Line Follow) loading failed")
+                    break
+
+                ret_object_detection, frame_object_detection = cap_object_detection.read()
+                if ret_object_detection:
+                    pass
+                else:
+                    print("❌ Video (Object detection) loading failed")
                     break
 
                 # Line Following
-                angle_avg, offset_avg, u = line_follower.follow(frame)
+                angle_avg, offset_avg, u = line_follower.follow(frame_line_follow)
                 main_inf_table.add_row("Offset", str(offset_avg))
                 main_inf_table.add_row("Angle", str(angle_avg))
                 main_inf_table.add_row("Calibrate direction", str(u))
                 # Counting Step
-                step_count.read_frame(frame)
+                step_count.read_frame(frame_line_follow)
                 main_inf_table.add_row("Now Level", str(step_count.level))
 
                 # 設定每一關要看的東西，以及其他相關參數
@@ -100,8 +132,8 @@ try:
                         level1.light_triggered = True
 
                 elif step_count.level == 2: # 機器辨識關卡
-                    level2.frame_w = frame.shape[1]
-                    level2.frame_h = frame.shape[0]
+                    level2.frame_w = ret_object_detection.shape[1]
+                    level2.frame_h = ret_object_detection.shape[0]
                     detector.set_detect_objects(LOOK_OBJECTS_2)
                     look_object_3 = [level1.manual_finish()]
 
@@ -109,7 +141,7 @@ try:
 
                 # 主程式送 frame 給辨識節點
                 if not hub.new_frame:
-                    hub.update_frame(frame)
+                    hub.update_frame(frame_object_detection)
                     pass
                 else:
                     # print("pending...")
@@ -135,15 +167,15 @@ try:
 
                 # print(f"\rObject detection got {len(result)} result(s)\033[K", end="", flush=True)
                 if avail:
-                    
                     pass
 
                 if cv2.waitKey(1) & 0xFF == 27:  # Esc 離開
                     break
             except Exception as e:
                 print("❌ Error while doing main loop: ", e)
+                raise e
                 break
 
 finally:
-    cap.release()
-    cv2.destroyAllWindows()
+    cleanUp()
+

@@ -58,4 +58,5 @@ class Serial:
             return buffer
         
     def close(self):
-        self.ser.close()
+        if self.ser: self.ser.close()
+        print(f"Serial {self.com} closed")
