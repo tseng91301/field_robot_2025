@@ -61,10 +61,10 @@ class DualMotor:
         return
 
     def set_direction(self, direction):
-        # Input a direction angle between [-180, 180]
-        # -180: L_weight = 1.0, R_weight = -1.0
-        # 0: L_weight = 0.0, R_weight = 0.0
-        # 180: L_weight = -1.0, R_weight = 1.0
+        """Input a direction angle between [-180, 180]
+        -180: L_weight = 1.0, R_weight = -1.0
+        0: L_weight = 0.0, R_weight = 0.0
+        180: L_weight = -1.0, R_weight = 1.0"""
         direction = int(direction)
         if (direction < -180 or direction > 180):
             return

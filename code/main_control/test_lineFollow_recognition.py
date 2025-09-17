@@ -21,10 +21,10 @@ DEBUG_MODE = False
 SERIAL_SIMULATION_MODE = True
 SERIAL_PORT_MOTOR = "/dev/arduino_uno-1"
 SERIAL_PORT_CUP = "/dev/arduino_uno-2"
-# CAMERA_OUTDOOR_PATH = "/dev/webcam_outdoor"
-# CAMERA_INDOOR_PATH = "/dev/webcam_indoor"
-CAMERA_OUTDOOR_PATH = 0
-CAMERA_INDOOR_PATH = 0
+CAMERA_OUTDOOR_PATH = "/dev/webcam_outdoor"
+CAMERA_INDOOR_PATH = "/dev/webcam_indoor"
+# CAMERA_OUTDOOR_PATH = 0
+# CAMERA_INDOOR_PATH = 0
 
 # 定義每一關之中要看那些東西
 LOOK_OBJECTS_1 = ["chick", "pig", "cow"]
@@ -142,6 +142,7 @@ try:
                     level2.frame_h = ret_object_detection.shape[0]
                     detector.set_detect_objects(LOOK_OBJECTS_2)
                     look_object_3 = [level1.manual_finish()]
+                    level2_speed_decrese = level2.move_speed
 
                 live.update(main_inf_table) # 更新表格
 
@@ -169,18 +170,12 @@ try:
                         level1.look_obj(result[0][4])
                     if level1.finish_looking or step_count.level == 2:
                         level2.get_obj(result[0])
-                    
-
-                # print(f"\rObject detection got {len(result)} result(s)\033[K", end="", flush=True)
-                if avail:
-                    pass
 
                 if cv2.waitKey(1) & 0xFF == 27:  # Esc 離開
                     break
             except Exception as e:
                 print("❌ Error while doing main loop: ", e)
                 raise e
-                break
 
 finally:
     cleanUp()
