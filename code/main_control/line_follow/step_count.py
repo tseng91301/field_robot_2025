@@ -7,7 +7,7 @@ class StepCounter:
     def __init__(self):
         self.consecutive_detected = 0
         self.consecutive_not_detected = 0
-        self.level = 1
+        self.level = 0
         self.waiting_for_reset = False
 
     def read_frame(self, frame_inp: np.ndarray):

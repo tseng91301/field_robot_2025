@@ -63,4 +63,4 @@ class StepCountConfig:
     Y_END = 1.0
     X_WIDTH = 0.3
 
-    SHOW_DEBUG = False
+    SHOW_DEBUG = True
