@@ -16,10 +16,21 @@ class LineFollower:
         self.angles_buf = deque(maxlen=LineFollowConfig.SMOOTH_N)
         self.offsets_buf = deque(maxlen=LineFollowConfig.SMOOTH_N)
         self.offset_cal = 0 # 循跡時要偏移的距離(左負右正)
+        self.on = True
+
+    def switch(self, on):
+        self.on = on
+        if not on:
+            self.motorL.set_speed(0)
+            self.motorR.set_speed(0)
 
     def follow(self, frame):
         # 定義需要回傳的值
         angle_avg, offset_avg, u = None, None, None
+        if not self.on:
+            self.motorL.set_speed(0)
+            self.motorR.set_speed(0)
+            return angle_avg, offset_avg, u
 
         roi, (rx, ry, rw, rh) = proportional_roi(frame)
         mask = red_mask_hsv(roi)

@@ -141,7 +141,9 @@ with Live(refresh_per_second=10) as live:
                 obj = level1.manual_finish()
                 light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
                 print(f"Light Number: {light_number}")
-                cup.set_led(light_number) # 讓 arduino 亮燈
+                line_follower.switch(False)
+                cup.set_led_wait(light_number) # 讓 arduino 亮燈
+                line_follower.switch(True)
 
                 level1.light_triggered = True
 
