@@ -22,6 +22,7 @@ uint8_t bytesRead = 0;
 uint8_t getDataLengthForCommand(uint8_t cmd) {
     switch (cmd) {
         case 0xB1: return 1;  // 查看重量
+        case 0xB2: return 1; // 亮 led 燈
         default: return 0;
     }
 }
