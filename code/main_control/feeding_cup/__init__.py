@@ -8,12 +8,14 @@ class FeedingCup:
         self.initial_step = 0 # 步進馬達一開始的位置
         self.trigger_step = 0 # 伸出手臂觸發飼料機的步進馬達步數
         self.now_step = 0 # 目前記錄的步數
+        self.command_byte_stepper = 0x00
+        self.command_byte_led = 0x00
         return
     
-    def set_command_byte(self, command_byte_stepper: int, coommand_byte_led: int, read_byte: int):
+    def set_command_byte(self, command_byte_stepper: int, command_byte_led: int, read_byte: int):
         self.command_byte_stepper = command_byte_stepper # 步進馬達指令發送的裝置代碼
         self.read_byte = read_byte # 查看重量的指令代碼
-        self.coommand_byte_led = coommand_byte_led # 分類顯示 LED 的指令代碼
+        self.command_byte_led = command_byte_led # 分類顯示 LED 的指令代碼
         return
     
     def turn(self, step: int):
@@ -63,16 +65,21 @@ class FeedingCup:
         呼叫後立即送出開燈指令，並在背景 3 秒後自動關燈。
         """
         async def task():
-            outp = bytearray([self.coommand_byte_led, color])
+            outp = bytearray([self.command_byte_led, color])
             self.ser.send_command(outp)
 
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
-            outp = bytearray([self.coommand_byte_led, 0])
+            outp = bytearray([self.command_byte_led, 0])
             self.ser.send_command(outp)
 
         # 建立背景任務，不會阻塞主程式
-        asyncio.create_task(task())
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(task())
+        except RuntimeError:
+            # 如果沒有正在跑的 loop，就自己開一個
+            asyncio.run(task())
 
     
 

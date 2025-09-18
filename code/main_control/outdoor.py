@@ -147,8 +147,8 @@ while True:
             if motor_dual:
                 motor_dual.set_direction(output)
 
-    # cv2.imshow("Frame", frame)
-    # cv2.imshow("Red Mask", mask)
+    cv2.imshow("Frame", frame)
+    cv2.imshow("Red Mask", mask)
     if cv2.waitKey(1) & 0xFF == 27:
         break
 

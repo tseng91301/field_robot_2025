@@ -42,6 +42,7 @@ void processCommand(uint8_t cmd, uint8_t* data) {
         case 0xB2: { // 設定重量分類 LED 燈顏色
             uint8_t color = data[0];
             set_weight_distribute(color);
+            Serial.println(color);
             delete data;
             break;
         }

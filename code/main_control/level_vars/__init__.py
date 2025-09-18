@@ -26,6 +26,8 @@ class Level1:
                 if len(self.signed_obj) > 0:
                     self.now_detected_obj = max(self.signed_obj, key=self.signed_obj.get)
                 self.finish_looking = True
+            # if self.finish_looking == True:
+            #     print(f"Saw Object: {self.now_detected_obj}")
     
     def manual_finish(self):
         # 手動結束關卡

@@ -87,7 +87,7 @@ class DetectorThread(threading.Thread):
                         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                         confidence = box.conf.item()
                         detect_boxes.append((x1, y1, x2-x1, y2-y1, label, confidence))
-                
+
                 self.hub.set_result(detect_boxes)
             else:
                 time.sleep(0.01)  # 沒新 frame → 稍微休息
