@@ -1,8 +1,21 @@
 #include <Arduino.h>
+#include <Stepper.h>
 #include "weight.h"
 #include "led_output.h"
 
+#define STEPS_PER_RESOLUTION 2048
+Stepper myStepper(STEPS_PER_RESOLUTION, 8, 10, 9, 11);  // Initialize the stepper motor with 4 control pins
+
 Weight weight(6, 5, -945);
+
+void use_feeder(float target_weight) {
+    myStepper.step(5000);    // Move the motor forward 9000 steps
+    float weight_got = weight.get_weight();
+    while (weight_got < target_weight) {
+        weight_got = weight.get_weight();
+    }
+    myStepper.step(-5000);
+}
 
 // Byte command handle
 
@@ -21,8 +34,9 @@ uint8_t bytesRead = 0;
 
 uint8_t getDataLengthForCommand(uint8_t cmd) {
     switch (cmd) {
-        case 0xB1: return 1;  // 查看重量
+        case 0xB1: return 1; // 查看重量 (會有延遲 + 回傳)
         case 0xB2: return 1; // 亮 led 燈
+        case 0xB3: return 1; // 獲取對應重量的飼料 (會有延遲+回傳須同步)
         default: return 0;
     }
 }
@@ -45,6 +59,13 @@ void processCommand(uint8_t cmd, uint8_t* data) {
             delete data;
             break;
         }
+        case 0xB3: {
+            uint8_t target_weight = data[0];
+            use_feeder(target_weight);
+            delete data;
+            Serial.write(0xB3); // Return success value
+            break;
+        }
         default:
             Serial.println("Unknown command");
             break;
@@ -55,6 +76,8 @@ void setup() {
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
     init_weight_distribute_led();
+    weight.tare();
+    myStepper.setSpeed(15);  // Set motor speed to 15 RPM (rotations per minute)
 }
 
 void loop() {
