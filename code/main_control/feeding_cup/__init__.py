@@ -12,13 +12,13 @@ class FeedingCup:
         self.command_byte_stepper = 0x00
         self.command_byte_led = 0x00
         return
-    
+
     def set_command_byte(self, command_byte_stepper: int, command_byte_led: int, read_byte: int):
         self.command_byte_stepper = command_byte_stepper # 步進馬達指令發送的裝置代碼
         self.read_byte = read_byte # 查看重量的指令代碼
         self.command_byte_led = command_byte_led # 分類顯示 LED 的指令代碼
         return
-    
+
     def turn(self, step: int):
         outp = bytearray()
         outp.append(self.command_byte_stepper)
@@ -27,27 +27,27 @@ class FeedingCup:
         self.ser.send_command(outp)
         self.now_step += step
         return
-    
+
     def turn_to(self, step: int):
         self.turn(step - self.now_step)
         return
-    
+
     def elongation(self):
         # 伸長
         self.turn_to(self.initial_step + self.trigger_step)
         return
-    
+
     def put_back(self):
         # 縮短
         self.turn_to(self.initial_step)
         return
-    
+
     def set_initial_step(self, step: int, goTo: bool = True):
         self.initial_step = step
         if goTo:
             self.turn_to(step)
         return
-    
+
     async def weight(self):
         # 讀取重量
         outp = bytearray()
@@ -60,7 +60,7 @@ class FeedingCup:
         # 解析 float
         value = struct.unpack('<f', buffer[:4])[0]
         return value
-    
+
     def set_led(self, color: int):
         """
         呼叫後立即送出開燈指令，並在背景 3 秒後自動關燈。
@@ -81,7 +81,7 @@ class FeedingCup:
         except RuntimeError:
             # 如果沒有正在跑的 loop，就自己開一個
             asyncio.run(task())
-    
+
     def set_led_wait(self, color: int):
         outp = bytearray([self.command_byte_led, color])
         self.ser.send_command(outp)
@@ -90,5 +90,5 @@ class FeedingCup:
 
         outp = bytearray([self.command_byte_led, 0])
         self.ser.send_command(outp)
-    
+
 

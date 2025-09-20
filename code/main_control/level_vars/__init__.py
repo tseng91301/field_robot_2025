@@ -4,8 +4,8 @@ class Level1:
         self.finish_looking = False # 是否得到結果
         self.same_count = 0 # 看到同一物件多少次
         self.see_count = 0 # 偵測次數
-        self.min_see_count = 10 # 連續看到多少次才算通過
-        self.max_move_see = 30 # 邊移動邊看，但當移動中偵測次數超過這個數字還沒得到結果，就要停下來看
+        self.min_see_count = 3 # 連續看到多少次才算通過
+        self.max_move_see = 5 # 邊移動邊看，但當移動中偵測次數超過這個數字還沒得到結果，就要停下來看
         self.signed_obj = {} # 紀錄看到的東西及次數
         self.light_triggered = False # 是否亮過燈
         pass
@@ -28,7 +28,7 @@ class Level1:
                 self.finish_looking = True
             # if self.finish_looking == True:
             #     print(f"Saw Object: {self.now_detected_obj}")
-    
+
     def manual_finish(self):
         # 手動結束關卡
         if not self.finish_looking:
@@ -36,7 +36,7 @@ class Level1:
                 self.now_detected_obj = max(self.signed_obj, key=self.signed_obj.get)
             self.finish_looking = True
         return self.now_detected_obj
-    
+
 class Level2:
     def __init__(self):
         self.machine_pos_x = -1 # 目前偵測到機器的 x 位置
@@ -46,20 +46,40 @@ class Level2:
         self.frame_w = -1
         self.frame_h = -1
         self.move_speed = 1.0 # 往前的速度比例，隨著距離目標愈近要減速
-        self.stop = False
+        self.stop = False # 停止移動
+        self.in_range_time = 0 # 辨識到在範圍內的次數
+        self.min_in_range_time = 5 # 辨識到 5 次在範圍內才能做下一個動作
+        self.machine_available = False # 是否可以使用機器
+        self.used_machine = False # 是否用過機器
         pass
 
     def get_obj(self, inf: list):
-        c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]
-        self.machine_pos_x = c[0] - self.target_pos_offset
-        self.machine_pos_y = c[1]
-        offset = self.frame_w / 2 - self.machine_pos_x
-        # 依據目前的 offset 設定速度
-        if not self.stop:
-            if offset <= -self.frame_w*0.8: self.move_speed = 1.0
-            elif offset <= -self.frame_w*0.5: self.move_speed = 0.8
-            elif offset <= -self.frame_w*0.3: self.move_speed = 0.6
-            elif offset <= -self.frame_w*0.1: self.move_speed = 0.4
-            else: 
-                self.move_speed = 0.0
+        """
+        機器會由左往右走，因此辨識到的物體(飼料供應器)位置會從右到左(x 從大到小)。
+        假設鏡頭在杯子的右邊 10 單位，辨識的機器位置就會在杯子對機器位置往左偏 10 單位
+        (Ex: 鏡頭看到的 offset 是 0，已經在中間，實際上還需要再讓 offset 變為 -10 才會讓杯子在正確位置)
+        self.target_pos_offset 變數是之前設定杯子和鏡頭的 x 距離(杯子在左邊為負，右邊為正)
+        """
+        if not self.machine_available:
+            c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]
+            self.machine_pos_x = c[0] - self.target_pos_offset
+            self.machine_pos_y = c[1]
+            offset = self.frame_w / 2 - self.machine_pos_x
+            # 依據目前的 offset 設定速度
+            # if not self.stop:
+            #     if offset <= -self.frame_w*0.8: self.move_speed = 1.0
+            #     elif offset <= -self.frame_w*0.5: self.move_speed = 0.8
+            #     elif offset <= -self.frame_w*0.3: self.move_speed = 0.6
+            #     elif offset <= -self.frame_w*0.1: self.move_speed = 0.4
+            #     else:
+            #         self.move_speed = 0.0
+            #         self.stop = True
+            # 假設 offset 接近 0 時就停止(變成負的也是直接停止)
+            if offset <= 5:
                 self.stop = True
+                self.in_range_time += 1
+                if self.in_range_time == self.min_in_range_time:
+                    self.machine_available = True
+            return offset
+        else: 
+            return 0

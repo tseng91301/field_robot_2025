@@ -11,13 +11,18 @@ from level_vars import Level1, Level2
 from collections import Counter
 import signal
 import sys
-
 import time
 
+# 顯示表格
 from rich.live import Live
 from rich.table import Table
+from rich.console import Group
+from rich.layout import Layout
 
-DEBUG_MODE = False
+# 錯誤資訊處理
+import traceback
+
+DEBUG_MODE = True
 SERIAL_SIMULATION_MODE = False
 SERIAL_PORT_MOTOR = "/dev/arduino_uno-1"
 SERIAL_PORT_CUP = "/dev/arduino_uno-2"
@@ -100,94 +105,127 @@ def cleanUp(_, __):
 signal.signal(signal.SIGINT, cleanUp)  # 捕獲 Ctrl+C
 signal.signal(signal.SIGTERM, cleanUp)  # 捕獲終止信號
 
-#try:
-with Live(refresh_per_second=10) as live:
-    while True:
-        # 初始化輸出表格
-        main_inf_table = Table(title="Field Robot Indoor Challenge")
-        main_inf_table.add_column("Title", style="cyan", no_wrap=True)
-        main_inf_table.add_column("Value", style="magenta")
-        detection_table = Table(title="Object Detection")
-        detection_table.add_column("Label", style="cyan", no_wrap=True)
-        detection_table.add_column("Count", style="magenta")
-        #try:
-        ret_line_follow, frame_line_follow = cap_line_follow.read()
-        if ret_line_follow:
-            pass
-        else:
-            print("❌ Video (Line Follow) loading failed")
-            break
+try:
+    with Live(refresh_per_second=10) as live:
+        while True:
+            # 初始化輸出表格
+            layout = Layout()
+            layout.split_row(
+                Layout(name="left"),
+                Layout(name="right")
+            )
+            main_inf_table = Table(title="Field Robot Indoor Challenge")
+            main_inf_table.add_column("Title", style="cyan", no_wrap=True)
+            main_inf_table.add_column("Value", style="magenta")
+            detection_table = Table(title="Object Detection")
+            detection_table.add_column("Label", style="cyan", no_wrap=True)
+            detection_table.add_column("Count", style="magenta")
+            #try:
+            ret_line_follow, frame_line_follow = cap_line_follow.read()
+            if ret_line_follow:
+                pass
+            else:
+                print("❌ Video (Line Follow) loading failed")
+                break
 
-        ret_object_detection, frame_object_detection = cap_object_detection.read()
-        if ret_object_detection:
-            pass
-        else:
-            print("❌ Video (Object detection) loading failed")
-            break
+            ret_object_detection, frame_object_detection = cap_object_detection.read()
+            if ret_object_detection:
+                pass
+            else:
+                print("❌ Video (Object detection) loading failed")
+                break
 
-        # Line Following
-        angle_avg, offset_avg, u = line_follower.follow(frame_line_follow)
-        main_inf_table.add_row("Offset", str(offset_avg))
-        main_inf_table.add_row("Angle", str(angle_avg))
-        main_inf_table.add_row("Calibrate direction", str(u))
-        # Counting Step
-        step_count.read_frame(frame_line_follow)
-        main_inf_table.add_row("Now Level", str(step_count.level))
+            # Line Following
+            angle_avg, offset_avg, u = line_follower.follow(frame_line_follow)
+            main_inf_table.add_row("Offset", str(offset_avg))
+            main_inf_table.add_row("Angle", str(angle_avg))
+            main_inf_table.add_row("Calibrate direction", str(u))
+            # Counting Step
+            # step_count.read_frame(frame_line_follow) 
+            main_inf_table.add_row("Now Level", str(step_count.level))
 
-        # 設定每一關要看的東西，以及其他相關參數
-        if step_count.level == 1: # 動物辨識關卡
-            detector.set_detect_objects(LOOK_OBJECTS_1)
-            if level1.finish_looking and not level1.light_triggered:
-                obj = level1.manual_finish()
-                light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
-                print(f"Light Number: {light_number}")
-                line_follower.switch(False)
-                cup.set_led_wait(light_number) # 讓 arduino 亮燈
-                line_follower.switch(True)
+            # 設定每一關要看的東西，以及其他相關參數
+            if step_count.level == 1: # 動物辨識關卡
+                detector.set_detect_objects(LOOK_OBJECTS_1)
+                print("ready to detect")
+                if level1.finish_looking and not level1.light_triggered:
+                    obj = level1.manual_finish()
+                    light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
+                    print(f"Light Number: {light_number}")
+                    line_follower.switch(False)
+                    cup.set_led_wait(light_number) # 讓 arduino 亮燈
+                    print("already finished led")
+                    line_follower.switch(True)
 
-                level1.light_triggered = True
+                    level1.light_triggered = True
+                    step_count.level += 1
 
-        elif step_count.level == 2: # 機器辨識關卡
-            level2.frame_w = ret_object_detection.shape[1]
-            level2.frame_h = ret_object_detection.shape[0]
-            detector.set_detect_objects(LOOK_OBJECTS_2)
-            look_object_3 = [level1.manual_finish()]
-            level2_speed_decrese = level2.move_speed
+            elif step_count.level == 2: # 機器辨識關卡
+                level2.frame_w = ret_object_detection.shape[1]
+                level2.frame_h = ret_object_detection.shape[0]
+                detector.set_detect_objects(LOOK_OBJECTS_2)
+                look_object_3 = [level1.manual_finish()]
+                if level2.stop and not level2.used_machine:
+                    print("Level2: Using machine")
+                    line_follower.switch(False)
+                    time.sleep(3)
+                    line_follower.switch(True)
+                    level2.used_machine = True
+                    print("Machine used successfully!")
 
-        # live.update(main_inf_table) # 更新表格
 
-        # 主程式送 frame 給辨識節點
-        if not hub.new_frame:
-            hub.update_frame(frame_object_detection)
-            pass
-        else:
-            # print("pending...")
-            pass
+            # 主程式送 frame 給辨識節點
+            if not hub.new_frame:
+                hub.update_frame(frame_object_detection)
+                pass
+            else:
+                # print("pending...")
+                pass
 
-        (avail, result) = hub.get_result()
-        if avail:
-            # 有偵測到物件
-            # 更新 object detection 表格
-            detection_table.add_row("All", str(len(result)))
-            labels = [b[4] for b in result]
-            label_cnt = Counter(labels)
-            for label, cnt in label_cnt.items():
-                detection_table.add_row(label, str(cnt))
-            live.update(detection_table)
-            # 依照物件的 confidence 做排序
-            result.sort(key=lambda x: x[5], reverse=True)
-            if len(result)>0:
-                if not level1.finish_looking:
-                    level1.look_obj(result[0][4])
-                if level1.finish_looking or step_count.level == 2:
-                    level2.get_obj(result[0])
+            (avail, result) = hub.get_result()
+            if avail:
+                # 有偵測到物件
+                # 更新 object detection 表格
+                detection_table.add_row("All", str(len(result)))
+                labels = [b[4] for b in result]
+                label_cnt = Counter(labels)
+                for label, cnt in label_cnt.items():
+                    detection_table.add_row(label, str(cnt))
+                # 有進行辨識才更新物件辨識表格
+                layout["right"].update(detection_table)
+                # 依照物件的 confidence 做排序
+                result.sort(key=lambda x: x[5], reverse=True)
+                if len(result)>0:
+                    if not level1.finish_looking:
+                        # Level 1: 藉由結果來查看動物種類
+                        level1.look_obj(result[0][4])
+                    if level1.finish_looking or step_count.level == 2:
+                        # Level 2: 藉由結果去看機器現在的偏離量
+                        offset = level2.get_obj(result[0])
+                        main_inf_table.add_row("Level 2 machine offset", str(offset))
+            
+            # 更新主要資訊表格
+            layout["left"].update(main_inf_table)
+            # 更新所有表格
+            live.update(layout)
 
-        if cv2.waitKey(1) & 0xFF == 27:  # Esc 離開
-            break
-'''           except Exception as e:
-                print("❌ Error while doing main loop: ", e)
-                raise e
-'''
-'''finally:
-    cleanUp()'''
+            if cv2.waitKey(1) & 0xFF == 27:  # Esc 離開
+                break
+
+except Exception as e:
+    print("❌ Error while doing main loop: ")
+    print("Error type:", type(e).__name__)
+    print("Error message:", str(e))
+    
+    # 印出完整錯誤堆疊
+    traceback.print_exc()
+
+    # 或取得錯誤發生位置（檔案、行號等）
+    tb = traceback.extract_tb(e.__traceback__)
+    for filename, lineno, func, text in tb:
+        print(f"Filename: {filename}, Line: {lineno}, Function: {func}, Code: {text}")
+
+finally:
+    cleanUp()
+
 
