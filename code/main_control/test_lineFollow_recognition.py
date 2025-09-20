@@ -12,6 +12,7 @@ from collections import Counter
 import signal
 import sys
 import time
+import asyncio
 
 # 顯示表格
 from rich.live import Live
@@ -34,6 +35,7 @@ CAMERA_INDOOR_PATH = "/dev/webcam_indoor"
 LOOK_OBJECTS_1 = ["chick", "pig", "cow"]
 LOOK_OBJECTS_2 = ["machine"]
 look_object_3 = [""] # 依據第一關看到的東西去設定
+ANIMAL_FEEDING_WEIGHT = {"chick": 50, "pig": 75, "cow": 100} # 每一種動物需要的飼料重量
 
 # 定義每個關卡的特定變數和功能
 level1 = Level1()
@@ -154,7 +156,7 @@ try:
                     light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
                     print(f"Light Number: {light_number}")
                     line_follower.switch(False)
-                    cup.set_led_wait(light_number) # 讓 arduino 亮燈
+                    cup.set_animal_led_wait(light_number) # 讓 arduino 亮燈
                     print("already finished led")
                     line_follower.switch(True)
                     level1.light_triggered = True
@@ -168,7 +170,16 @@ try:
                 if level2.machine_available and not level2.used_machine:
                     print("Level2: Using machine")
                     line_follower.switch(False)
-                    time.sleep(3) # 之後更改成觸發飼料機的程式
+                    # 之後更改成觸發飼料機的程式，這裡用閃兩下代替
+                    cup.set_led(1)
+                    time.sleep(0.2)
+                    cup.set_led(0)
+                    time.sleep(0.2)
+                    cup.set_led(1)
+                    time.sleep(0.2)
+                    cup.set_led(0)
+                    time.sleep(0.2)
+                    # asyncio.run(cup.feed(ANIMAL_FEEDING_WEIGHT[look_object_3[0]]))
                     line_follower.switch(True)
                     level2.used_machine = True
                     print("Machine used successfully!")
