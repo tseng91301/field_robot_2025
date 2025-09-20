@@ -39,7 +39,6 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
-last_x_left = None
 lane_width = 250  # bird’s-eye view 車道寬度像素
 window_size = 5   # 局部滑動平均範圍
 
@@ -80,26 +79,18 @@ while True:
 
         if len(xs) == 0:
             # 沒偵測到紅線，用上一行中點
-            if last_x_left is not None and last_x_right is not None:
-                x_center = (last_x_left + last_x_right)/2
-                centers.append((x_center, y))
-            else:
-                x_center = 400//2
-                centers.append((x_center, y))
+            x_center = (last_x_left + last_x_right)/2
+            centers.append((x_center, y))
         else:
             x_left = xs[0]; x_right = xs[-1]
-            if abs(x_left - x_right < 25): # 可能指偵測到其中一邊
-                if last_x_left is not None and last_x_right is not None:
-                    last_x_dist = abs(last_x_left - last_x_right)
-                    if abs(x_left - last_x_left) < abs(x_right - last_x_right): # 只偵測到左邊
-                        x_center = x_left + last_x_dist // 2
-                        x_right = x_left + last_x_dist
-                    else: # 只偵測到右邊
-                        x_center = x_right - last_x_dist // 2
-                        x_left = x_right - last_x_dist
-                    pass
-                else:
-                    x_center = x_center = 400//2
+            if abs(x_left - x_right < 25): # 可能只偵測到其中一邊
+                last_x_dist = abs(last_x_left - last_x_right)
+                if abs(x_left - last_x_left) < abs(x_right - last_x_right): # 只偵測到左邊
+                    x_center = x_left + last_x_dist // 2
+                    x_right = x_left + last_x_dist
+                else: # 只偵測到右邊
+                    x_center = x_right - last_x_dist // 2
+                    x_left = x_right - last_x_dist
                 centers.append((x_center, y))
             else:
                 x_center = (x_left + x_right)/2
