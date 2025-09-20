@@ -6,7 +6,7 @@ from motor import Motor, DualMotor
 from feeding_cup import FeedingCup
 from serial_connection import Serial
 
-from level_vars import Level1, Level2
+from level_vars import Level1, Level2, Level3
 
 from collections import Counter
 import signal
@@ -16,7 +16,6 @@ import time
 # 顯示表格
 from rich.live import Live
 from rich.table import Table
-from rich.console import Group
 from rich.layout import Layout
 
 # 錯誤資訊處理
@@ -40,6 +39,7 @@ look_object_3 = [""] # 依據第一關看到的東西去設定
 level1 = Level1()
 level1.now_detected_obj = LOOK_OBJECTS_1[0] # 先設定一個預設值，讓後面有保底
 level2 = Level2()
+level3 = Level3()
 
 # --- Arduino Serial Setup ---
 try:
@@ -101,7 +101,7 @@ def cleanUp(_, __):
     cap_line_follow.release()
     cv2.destroyAllWindows()
     print("Process has been terminated safely with value 0.")
-    sys.exit(0)
+    return
 signal.signal(signal.SIGINT, cleanUp)  # 捕獲 Ctrl+C
 signal.signal(signal.SIGTERM, cleanUp)  # 捕獲終止信號
 
@@ -150,29 +150,43 @@ try:
                 print("ready to detect")
                 if level1.finish_looking and not level1.light_triggered:
                     obj = level1.manual_finish()
+                    look_object_3 = [obj] # 設定第三關要看的東西
                     light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
                     print(f"Light Number: {light_number}")
                     line_follower.switch(False)
                     cup.set_led_wait(light_number) # 讓 arduino 亮燈
                     print("already finished led")
                     line_follower.switch(True)
-
                     level1.light_triggered = True
                     step_count.level += 1
 
             elif step_count.level == 2: # 機器辨識關卡
-                level2.frame_w = ret_object_detection.shape[1]
-                level2.frame_h = ret_object_detection.shape[0]
+                level2.frame_w = frame_object_detection.shape[1]
+                level2.frame_h = frame_object_detection.shape[0]
                 detector.set_detect_objects(LOOK_OBJECTS_2)
-                look_object_3 = [level1.manual_finish()]
-                if level2.stop and not level2.used_machine:
+                line_follower.switch(False if level2.stop else True)
+                if level2.machine_available and not level2.used_machine:
                     print("Level2: Using machine")
                     line_follower.switch(False)
-                    time.sleep(3)
+                    time.sleep(3) # 之後更改成觸發飼料機的程式
                     line_follower.switch(True)
                     level2.used_machine = True
                     print("Machine used successfully!")
-
+                    step_count.level += 1
+            
+            elif step_count.level == 3: # 動物飼料放置關卡
+                level2.frame_w = frame_object_detection.shape[1]
+                level2.frame_h = frame_object_detection.shape[0]
+                detector.set_detect_objects(look_object_3)
+                line_follower.switch(False if level3.stop else True)
+                if level3.animal_available and not level3.fed_animal:
+                    print("Level3: Feeding...")
+                    line_follower.switch(False)
+                    time.sleep(3) # 之後更改成餵養動物的程式
+                    line_follower.switch(True)
+                    level3.fed_animal = True
+                    print("Feed successfully!")
+                    step_count.level += 1
 
             # 主程式送 frame 給辨識節點
             if not hub.new_frame:
@@ -203,6 +217,10 @@ try:
                         # Level 2: 藉由結果去看機器現在的偏離量
                         offset = level2.get_obj(result[0])
                         main_inf_table.add_row("Level 2 machine offset", str(offset))
+                    if step_count.level == 3:
+                        # Level 3: 藉由結果去看動物目標位置
+                        offset = level3.get_obj(result[0])
+                        main_inf_table.add_row("Level 3 animal offset", str(offset))
             
             # 更新主要資訊表格
             layout["left"].update(main_inf_table)
