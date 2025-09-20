@@ -61,6 +61,13 @@ class Level2:
         self.target_pos_offset 變數是之前設定杯子和鏡頭的 x 距離(杯子在左邊為負，右邊為正)
         """
         if not self.machine_available:
+            # Need Change
+            self.stop = True
+            self.in_range_time += 1
+            if self.in_range_time == self.min_in_range_time:
+                self.machine_available = True
+            return 0
+        
             c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]
             self.machine_pos_x = c[0] - self.target_pos_offset
             self.machine_pos_y = c[1]

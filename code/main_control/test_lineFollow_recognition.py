@@ -22,7 +22,7 @@ from rich.layout import Layout
 # 錯誤資訊處理
 import traceback
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 SERIAL_SIMULATION_MODE = False
 SERIAL_PORT_MOTOR = "/dev/arduino_uno-1"
 SERIAL_PORT_CUP = "/dev/arduino_uno-2"
@@ -46,7 +46,7 @@ level3 = Level3()
 # --- Arduino Serial Setup ---
 try:
     # initialize motor serial connection
-    serial_motor = Serial(SERIAL_PORT_MOTOR, 115200, simulate=SERIAL_SIMULATION_MODE)
+    serial_motor = Serial(SERIAL_PORT_MOTOR, 115200, simulate=True)
     serial_motor.print_results = DEBUG_MODE
     motorL = Motor(serial_motor); motorL.set_command_byte(0xA1); motorL.no_negative_speed = True
     motorR = Motor(serial_motor); motorR.set_command_byte(0xA2); motorR.no_negative_speed = True
@@ -55,7 +55,7 @@ try:
     # initialize cup serial connection
     serial_cup = Serial(SERIAL_PORT_CUP, 115200, simulate=SERIAL_SIMULATION_MODE)
     serial_cup.print_results = DEBUG_MODE
-    cup = FeedingCup(serial_cup); cup.set_command_byte(0x00, 0xB2, 0xB1)
+    cup = FeedingCup(serial_cup); cup.set_command_byte(0x00, 0xB2, 0xB1, 0xB3)
     print("✅ Serial cup connected")
     time.sleep(3)
     print("Finish Arduino Initialization")
@@ -149,7 +149,6 @@ try:
             # 設定每一關要看的東西，以及其他相關參數
             if step_count.level == 1: # 動物辨識關卡
                 detector.set_detect_objects(LOOK_OBJECTS_1)
-                print("ready to detect")
                 if level1.finish_looking and not level1.light_triggered:
                     obj = level1.manual_finish()
                     look_object_3 = [obj] # 設定第三關要看的東西
@@ -166,6 +165,7 @@ try:
                 level2.frame_w = frame_object_detection.shape[1]
                 level2.frame_h = frame_object_detection.shape[0]
                 detector.set_detect_objects(LOOK_OBJECTS_2)
+                level2.get_obj(["machine"])
                 line_follower.switch(False if level2.stop else True)
                 if level2.machine_available and not level2.used_machine:
                     print("Level2: Using machine")
@@ -255,6 +255,6 @@ except Exception as e:
         print(f"Filename: {filename}, Line: {lineno}, Function: {func}, Code: {text}")
 
 finally:
-    cleanUp()
+    cleanUp(None, None)
 
 
