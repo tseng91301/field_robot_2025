@@ -7,7 +7,7 @@ class StepCounter:
     def __init__(self):
         self.consecutive_detected = 0
         self.consecutive_not_detected = 0
-        self.level = 0
+        self.level = 1
         self.waiting_for_reset = False
 
     def read_frame(self, frame_inp: np.ndarray):
@@ -36,8 +36,8 @@ class StepCounter:
             if detected:
                 self.consecutive_detected += 1
                 if self.consecutive_detected >= 10:
-                    self.level += 1
-                    print(f"✅ 偵測到紅線！關卡 +1 → 現在 level = {self.level}")
+                    #self.level += 1
+                    print(f"✅ 偵測到綠線！關卡 +1 → 現在 level = {self.level}")
                     self.waiting_for_reset = True
                     self.consecutive_detected = 0
             else:
@@ -46,9 +46,10 @@ class StepCounter:
             if not detected:
                 self.consecutive_not_detected += 1
                 if self.consecutive_not_detected >= 30:
-                    print("🔄 狀態重設，可以偵測下一條紅線了")
+                    print("🔄 狀態重設，可以偵測下一條綠線了")
                     self.waiting_for_reset = False
                     self.consecutive_not_detected = 0
+                    self.level += 1
             else:
                 self.consecutive_not_detected = 0
 

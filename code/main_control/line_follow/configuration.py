@@ -3,13 +3,25 @@ import numpy as np
 from dataclasses import dataclass
 
 # 參數設定
-class GeneralConfig:
+'''class GeneralConfig:
     # 紅線的 mask 邊界值
     # HSV 紅色閾值（兩段）
     H_LOW1  = np.array([0,   90,  80])   # 視情況調 S/V 閾值（避免陰影/反光）
     H_HIGH1 = np.array([10, 255, 255])
     H_LOW2  = np.array([170, 90,  80])
-    H_HIGH2 = np.array([180, 255, 255])
+    H_HIGH2 = np.array([180, 255, 255])'''
+
+# 參數設定
+class GeneralConfig:
+    # 綠線的 mask 邊界值
+    # HSV 綠色閾值（單段就好，通常不需要像紅色分兩段）
+    H_LOW1  = np.array([35,  90,  80])   # H: 35° 左右, S/V 視情況調
+    H_HIGH1 = np.array([85, 255, 255])
+
+    # 如果你的程式需要 H_LOW2/H_HIGH2 這樣的格式（原本紅色用兩段），
+    # 你可以把第二組設成跟第一組一樣，或是留一個沒用的範圍：
+    H_LOW2  = np.array([35,  90,  80])
+    H_HIGH2 = np.array([85, 255, 255])
 
 # 影像辨識循跡
 class LineFollowConfig:
@@ -57,10 +69,10 @@ class StepCountConfig:
     H_HIGH1 = GeneralConfig.H_HIGH1
     H_LOW2  = GeneralConfig.H_LOW2
     H_HIGH2 = GeneralConfig.H_HIGH2
-    
+
     # ROI 區域
     Y_START = 0.75
     Y_END = 1.0
     X_WIDTH = 0.3
 
-    SHOW_DEBUG = True
+    SHOW_DEBUG = False

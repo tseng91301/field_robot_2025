@@ -34,13 +34,13 @@ except Exception as e:
 
 # --- Open Camera ---
 # cap = cv2.VideoCapture("VID_20250904_211031.mp4")
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("/dev/webcam_outdoor")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
 last_x_left = None
-lane_width = 200  # bird’s-eye view 車道寬度像素
+lane_width = 250  # bird’s-eye view 車道寬度像素
 window_size = 5   # 局部滑動平均範圍
 
 motor_dual.speed = 0.35
@@ -149,13 +149,13 @@ while True:
 
     cv2.imshow("Frame", frame)
     cv2.imshow("Red Mask", mask)
-    if cv2.waitKey(1) & 0xFF == 27:
+    if cv2.waitKey(1) & 0xFF == 27:    #press esc
         break
 
     time.sleep(0.05)
-    # while True:
-    #     if cv2.waitKey(1) & 0xFF == 13:
-    #         break
+    '''while True:
+         if cv2.waitKey(1) & 0xFF == 13:   #press enter key to stop
+             break'''
 
 cap.release()
 cv2.destroyAllWindows()
