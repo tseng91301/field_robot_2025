@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import serial
 import time
 from motor import Motor, DualMotor
 from serial_connection import Serial
@@ -10,18 +9,19 @@ kP = 0.7 # TODO: 更改數值
 kI = 0.001 # TODO: 更改數值
 kD = 0.01 # TODO: 更改數值
 
-LINE_OFFSET = 50 # 循線時要篇移的距離(鏡頭看到的畫數)
+LINE_OFFSET = 0 # 循線時要篇移的距離(鏡頭看到的畫數)
+SERIAL_SIMULATION_MODE = False
 
 pe, ie = 0.0, 0.0
 
 # --- 透視轉換的比例座標 ---
-pts_src_config = np.float32([[0.2, 0.15], [0.8, 0.15], [0.0, 1.0], [1.0, 1.0]])
-bird_width, bird_height = 400, 400
+pts_src_config = np.float32([[0.0, 0.15], [1.0, 0.15], [0.0, 1.0], [1.0, 1.0]])
+bird_width, bird_height = 600, 400
 pts_dst = np.float32([[0,0],[bird_width,0],[0,bird_height],[bird_width,bird_height]])
 
 # --- Arduino Serial Setup ---
 try:
-    serial_motor = Serial('/dev/arduino_uno-1', 115200)
+    serial_motor = Serial('/dev/arduino_uno-1', 115200, simulate=SERIAL_SIMULATION_MODE)
     motorL = Motor(serial_motor); motorL.set_command_byte(0xA1); motorL.no_negative_speed = True
     motorR = Motor(serial_motor); motorR.set_command_byte(0xA2); motorR.no_negative_speed = True
     motor_dual = DualMotor(motorL, motorR)
@@ -33,7 +33,7 @@ except Exception as e:
     motor_dual = None
 
 # --- Open Camera ---
-# cap = cv2.VideoCapture("VID_20250904_211031.mp4")
+# cap = cv2.VideoCapture("1757656904112.mp4")
 cap = cv2.VideoCapture("/dev/webcam_outdoor")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -71,7 +71,7 @@ while True:
 
     # --- 掃描每行取左右邊界 + 中點 (由底部向上) ---
     centers = []
-    last_x_left, last_x_right = 0, 400
+    last_x_left, last_x_right = 0, bird_width
 
     for y in range(mask_bird.shape[0]-1, -1, -1):  # 底部到上方
         row = mask_bird[y, :]
@@ -83,7 +83,7 @@ while True:
             centers.append((x_center, y))
         else:
             x_left = xs[0]; x_right = xs[-1]
-            if abs(x_left - x_right < 25): # 可能只偵測到其中一邊
+            if abs(x_left - x_right) < 25: # 可能只偵測到其中一邊
                 last_x_dist = abs(last_x_left - last_x_right)
                 if abs(x_left - last_x_left) < abs(x_right - last_x_right): # 只偵測到左邊
                     x_center = x_left + last_x_dist // 2
@@ -123,15 +123,17 @@ while True:
         if len(centers_smooth) > 0:
             # 取所有 x_center 的平均
             x_avg = np.mean(centers_smooth[:,0])
+            # print(f"x_avg: {x_avg}")
 
-            # error = 平均中線 - 200 (假設 200 是車道中間)
-            error = x_avg - 200
+            # error = 平均中線 - 車道中間 x 位置
+            error = x_avg - bird_width//2
             error -= LINE_OFFSET
 
-            print(error)
+            # print(error)
 
             de = error - pe
             ie += error
+            ie = max(min(ie, 1000), -1000) # 限制 ie 範圍
             pe = error
             output = -(kP*error + kI*ie + kD*de)
 
@@ -143,7 +145,6 @@ while True:
     if cv2.waitKey(1) & 0xFF == 27:    #press esc
         break
 
-    time.sleep(0.05)
     '''while True:
          if cv2.waitKey(1) & 0xFF == 13:   #press enter key to stop
              break'''
