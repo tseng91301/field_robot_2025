@@ -38,15 +38,15 @@ look_object_3 = [""] # 依據第一關看到的東西去設定
 ANIMAL_FEEDING_WEIGHT = {"chick": 50, "pig": 75, "cow": 100} # 每一種動物需要的飼料重量
 
 # 定義每個關卡的特定變數和功能
-level1 = Level1()
+level1 = Level1(); level1.look_objects = LOOK_OBJECTS_1
 level1.now_detected_obj = LOOK_OBJECTS_1[0] # 先設定一個預設值，讓後面有保底
-level2 = Level2()
-level3 = Level3()
+level2 = Level2(); level2.look_objects = LOOK_OBJECTS_2
+level3 = Level3(); level3.look_objects = look_object_3
 
 # --- Arduino Serial Setup ---
 try:
     # initialize motor serial connection
-    serial_motor = Serial(SERIAL_PORT_MOTOR, 115200, simulate=True)
+    serial_motor = Serial(SERIAL_PORT_MOTOR, 115200, simulate=False)
     serial_motor.print_results = DEBUG_MODE
     motorL = Motor(serial_motor); motorL.set_command_byte(0xA1); motorL.no_negative_speed = True
     motorR = Motor(serial_motor); motorR.set_command_byte(0xA2); motorR.no_negative_speed = True
@@ -143,7 +143,7 @@ try:
             main_inf_table.add_row("Angle", str(angle_avg))
             main_inf_table.add_row("Calibrate direction", str(u))
             # Counting Step
-            # step_count.read_frame(frame_line_follow) 
+            # step_count.read_frame(frame_line_follow)
             main_inf_table.add_row("Now Level", str(step_count.level))
 
             # 設定每一關要看的東西，以及其他相關參數
@@ -159,13 +159,12 @@ try:
                     print("already finished led")
                     line_follower.switch(True)
                     level1.light_triggered = True
-                    step_count.level += 1
+                    step_count.level = 2
+                    detector.set_detect_objects(LOOK_OBJECTS_2)
 
             elif step_count.level == 2: # 機器辨識關卡
                 level2.frame_w = frame_object_detection.shape[1]
                 level2.frame_h = frame_object_detection.shape[0]
-                detector.set_detect_objects(LOOK_OBJECTS_2)
-                level2.get_obj(["machine"])
                 line_follower.switch(False if level2.stop else True)
                 if level2.machine_available and not level2.used_machine:
                     print("Level2: Using machine")
@@ -183,12 +182,13 @@ try:
                     line_follower.switch(True)
                     level2.used_machine = True
                     print("Machine used successfully!")
-                    step_count.level += 1
-            
+                    step_count.level = 3
+                    detector.set_detect_objects(look_object_3)
+                    level3.look_objects = look_object_3
+
             elif step_count.level == 3: # 動物飼料放置關卡
                 level2.frame_w = frame_object_detection.shape[1]
                 level2.frame_h = frame_object_detection.shape[0]
-                detector.set_detect_objects(look_object_3)
                 line_follower.switch(False if level3.stop else True)
                 if level3.animal_available and not level3.fed_animal:
                     print("Level3: Feeding...")
@@ -221,10 +221,10 @@ try:
                 # 依照物件的 confidence 做排序
                 result.sort(key=lambda x: x[5], reverse=True)
                 if len(result)>0:
-                    if not level1.finish_looking:
+                    if step_count.level == 1:
                         # Level 1: 藉由結果來查看動物種類
                         level1.look_obj(result[0][4])
-                    if level1.finish_looking or step_count.level == 2:
+                    if step_count.level == 2:
                         # Level 2: 藉由結果去看機器現在的偏離量
                         offset = level2.get_obj(result[0])
                         main_inf_table.add_row("Level 2 machine offset", str(offset))
@@ -232,7 +232,7 @@ try:
                         # Level 3: 藉由結果去看動物目標位置
                         offset = level3.get_obj(result[0])
                         main_inf_table.add_row("Level 3 animal offset", str(offset))
-            
+
             # 更新主要資訊表格
             layout["left"].update(main_inf_table)
             # 更新所有表格
@@ -245,7 +245,7 @@ except Exception as e:
     print("❌ Error while doing main loop: ")
     print("Error type:", type(e).__name__)
     print("Error message:", str(e))
-    
+
     # 印出完整錯誤堆疊
     traceback.print_exc()
 

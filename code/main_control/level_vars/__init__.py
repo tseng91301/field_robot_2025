@@ -8,6 +8,7 @@ class Level1:
         self.max_move_see = 5 # 邊移動邊看，但當移動中偵測次數超過這個數字還沒得到結果，就要停下來看
         self.signed_obj = {} # 紀錄看到的東西及次數
         self.light_triggered = False # 是否亮過燈
+        self.look_objects = []
         pass
 
     def look_obj(self, obj: str):
@@ -51,6 +52,7 @@ class Level2:
         self.min_in_range_time = 5 # 辨識到 5 次在範圍內才能做下一個動作
         self.machine_available = False # 是否可以使用機器
         self.used_machine = False # 是否用過機器
+        self.look_objects = []
         pass
 
     def get_obj(self, inf: list):
@@ -62,12 +64,13 @@ class Level2:
         """
         if not self.machine_available:
             # Need Change
-            self.stop = True
-            self.in_range_time += 1
-            if self.in_range_time == self.min_in_range_time:
-                self.machine_available = True
-            return 0
-        
+            # self.stop = True
+            # self.in_range_time += 1
+            # if self.in_range_time == self.min_in_range_time:
+            #     self.machine_available = True
+            # return 0
+
+            if inf[4] not in self.look_objects: return 0
             c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]
             self.machine_pos_x = c[0] - self.target_pos_offset
             self.machine_pos_y = c[1]
@@ -82,15 +85,17 @@ class Level2:
             #         self.move_speed = 0.0
             #         self.stop = True
             # 假設 offset 接近 0 時就停止(變成負的也是直接停止)
+            # print(f"Offset: {offset}")
             if offset <= 5:
+                print("make level2 stop")
                 self.stop = True
                 self.in_range_time += 1
                 if self.in_range_time == self.min_in_range_time:
                     self.machine_available = True
             return offset
-        else: 
+        else:
             return 0
-        
+
 class Level3:
     def __init__(self):
         self.animal_pos_x = -1 # 目前偵測到動物的 x 位置
@@ -105,6 +110,7 @@ class Level3:
         self.min_in_range_time = 5 # 辨識到 5 次在範圍內才能做下一個動作
         self.animal_available = False # 是否可以餵食
         self.fed_animal = False # 是否完成餵食
+        self.look_objects = []
         pass
 
     def get_obj(self, inf: list):
@@ -112,6 +118,8 @@ class Level3:
         參考 Level2 的說明
         """
         if not self.animal_available:
+            if inf[4] not in self.look_objects: return 0
+
             c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]
             self.animal_pos_x = c[0] - self.target_pos_offset
             self.animal_pos_y = c[1]
@@ -132,5 +140,5 @@ class Level3:
                 if self.in_range_time == self.min_in_range_time:
                     self.animal_available = True
             return offset
-        else: 
+        else:
             return 0
