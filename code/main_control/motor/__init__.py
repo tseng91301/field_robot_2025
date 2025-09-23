@@ -14,10 +14,11 @@ class Motor:
     def set_speed(self, speed: int):
         if speed > 255:
             speed = 255
+        elif speed < 0 and self.no_negative_speed:
+            speed = 0
         elif speed < -255:
             speed = -255
-        if speed < 0 and self.no_negative_speed:
-            speed = 0
+
         self.speed = speed
         outp = bytearray()
         outp.append(self.command_byte)

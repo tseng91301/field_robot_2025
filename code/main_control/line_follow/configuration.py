@@ -28,7 +28,7 @@ class LineFollowConfig:
 
     # 直線辨識的畫面擷取大小
     ROI_BOTTOM_START = 0.60   # 從畫面高度的 60% 開始（0~1）
-    ROI_HEIGHT_RATIO = 0.30   # ROI 高度佔整畫面的 30%（0~1）
+    ROI_HEIGHT_RATIO = 0.20   # ROI 高度佔整畫面的 30%（0~1）
 
     # 紅線的 mask 邊界值
     # HSV 紅色閾值（兩段）
@@ -49,8 +49,8 @@ class LineFollowConfig:
     KD = 60.0                # 微分增益
     INTEGRAL_CLAMP = 0.5     # 限制積分項的幅度（-0.5 ~ 0.5）
 
-    BASE_SPEED = 100         # 你的例子：兩輪基準速度 100
-    MAX_SPEED  = 255         # 馬達速度上限（含負值）
+    BASE_SPEED = 60         # 你的例子：兩輪基準速度 100
+    MAX_SPEED  = 100         # 馬達速度上限（含負值）
 
     # 平滑：保存最近 N 個角度/偏移
     SMOOTH_N = 5

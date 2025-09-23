@@ -24,6 +24,7 @@ class LineFollower:
             self.motorL.set_speed(0)
             self.motorR.set_speed(0)
 
+
     def follow(self, frame):
         # 定義需要回傳的值
         angle_avg, offset_avg, u = None, None, None
@@ -34,6 +35,11 @@ class LineFollower:
 
         roi, (rx, ry, rw, rh) = proportional_roi(frame)
         mask = red_mask_hsv(roi)
+
+        # 如果紅色佔比 > 一個數值，就判定是雙綠線，讓他直走
+        # 計算紅色佔比
+        red_ratio = np.sum(mask > 0) / mask.size
+        big_line = red_ratio > 0.4
 
         angle_rad, offset_norm, cx, cy = find_line_angle_and_offset(mask)
         if offset_norm: offset_norm -= self.offset_cal # 減去需要的篇移量
@@ -63,17 +69,21 @@ class LineFollower:
             # error = W_ANGLE * angle_norm + W_OFFSET * offset_avg
             error = LineFollowConfig.W_OFFSET * offset_avg # 暫時只使用 offset 作為 pid 控制的 err 根據
 
-            # PID 控制量（正值代表需要「向右修正」或相反，依下列混合）
-            u = self.pid.step(error)
+            if not big_line:
+                # PID 控制量（正值代表需要「向右修正」或相反，依下列混合）
+                u = self.pid.step(error)
 
-            # 將控制量轉成左右輪速度：
-            # 正 u -> 右輪變慢、左輪變快（左轉），你也可反過來，視車體定義
-            left_cmd  = LineFollowConfig.BASE_SPEED + u
-            right_cmd = LineFollowConfig.BASE_SPEED - u
+                # 將控制量轉成左右輪速度：
+                # 正 u -> 右輪變慢、左輪變快（左轉），你也可反過來，視車體定義
+                left_cmd  = LineFollowConfig.BASE_SPEED + u
+                right_cmd = LineFollowConfig.BASE_SPEED - u
 
-            # 限幅
-            left_cmd  = clamp(left_cmd,  -LineFollowConfig.MAX_SPEED, LineFollowConfig.MAX_SPEED)
-            right_cmd = clamp(right_cmd, -LineFollowConfig.MAX_SPEED, LineFollowConfig.MAX_SPEED)
+                # 限幅
+                left_cmd  = clamp(left_cmd,  -LineFollowConfig.MAX_SPEED, LineFollowConfig.MAX_SPEED)
+                right_cmd = clamp(right_cmd, -LineFollowConfig.MAX_SPEED, LineFollowConfig.MAX_SPEED)
+            else:
+                left_cmd  = LineFollowConfig.BASE_SPEED
+                right_cmd = LineFollowConfig.BASE_SPEED
 
         # 下發馬達
         self.motorL.set_speed(left_cmd)
@@ -112,5 +122,5 @@ class LineFollower:
             # 疊回 ROI 視覺
             dbg[ry:ry+rh, rx:rx+rw] = cv2.addWeighted(roi_bgr, 0.7, mask_vis, 0.3, 0)
             cv2.imshow("debug", dbg)
-        
+
         return angle_avg, offset_avg, u
