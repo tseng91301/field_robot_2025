@@ -87,7 +87,6 @@ class Level2:
             # 假設 offset 接近 0 時就停止(變成負的也是直接停止)
             # print(f"Offset: {offset}")
             if offset <= 5:
-                print("make level2 stop")
                 self.stop = True
                 self.in_range_time += 1
                 if self.in_range_time == self.min_in_range_time:

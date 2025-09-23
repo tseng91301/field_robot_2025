@@ -28,7 +28,10 @@ class LineFollowConfig:
 
     # 直線辨識的畫面擷取大小
     ROI_BOTTOM_START = 0.60   # 從畫面高度的 60% 開始（0~1）
-    ROI_HEIGHT_RATIO = 0.20   # ROI 高度佔整畫面的 30%（0~1）
+    ROI_HEIGHT_RATIO = 0.40   # ROI 高度佔整畫面的 30%（0~1）
+
+    VERTICAL_LINE_DEGREE = 35 # 垂直線角度誤差範圍
+    HORIZONTAL_LINE_DEGREE = 25 # 水平線角度誤差範圍
 
     # 紅線的 mask 邊界值
     # HSV 紅色閾值（兩段）
@@ -59,7 +62,7 @@ class LineFollowConfig:
     NO_LINE_BRAKE = True     # True：煞停；False：維持基準速度直行或保留上次控制量
 
     # 視覺化除錯
-    SHOW_DEBUG = False
+    SHOW_DEBUG = True
 
 class StepCountConfig:
 
