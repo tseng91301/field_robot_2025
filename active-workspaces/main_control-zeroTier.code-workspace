@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"uri": "vscode-remote://ssh-remote+192.168.196.24/home/jetson/field_robot_2025/code/main_control"
+		},
+		{
+			"uri": "vscode-remote://ssh-remote+192.168.196.24/home/jetson/field_robot_2025/code/mcu/cup_control"
+		},
+		{
+			"uri": "vscode-remote://ssh-remote+192.168.196.24/home/jetson/field_robot_2025/code/mcu/motor_and_sensor_control"
+		}
+	],
+	"remoteAuthority": "ssh-remote+192.168.196.24",
+	"settings": {}
+}
