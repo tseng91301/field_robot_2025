@@ -24,6 +24,11 @@ class LineFollower:
             self.motorL.set_speed(0)
             self.motorR.set_speed(0)
 
+        if on:
+            self.motorL.set_speed(LineFollowConfig.BASE_SPEED)
+            self.motorR.set_speed(LineFollowConfig.BASE_SPEED)
+
+
     def follow(self, frame):
         # 定義需要回傳的值
         angle_avg, offset_avg, u = None, None, None
@@ -112,5 +117,5 @@ class LineFollower:
             # 疊回 ROI 視覺
             dbg[ry:ry+rh, rx:rx+rw] = cv2.addWeighted(roi_bgr, 0.7, mask_vis, 0.3, 0)
             cv2.imshow("debug", dbg)
-        
+
         return angle_avg, offset_avg, u
