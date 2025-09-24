@@ -7,7 +7,7 @@ from serial_connection import Serial
 
 from line_follow_outdoor import LineFollower
 
-SERIAL_SIMULATION_MODE = False
+SERIAL_SIMULATION_MODE = True
 
 
 # --- 透視轉換比例座標 ---
@@ -48,7 +48,7 @@ try:
         if not ret:
             break
 
-        slope, offset, u = line_follower.follow(frame)
+        slope, offset, u = line_follower.follow(frame, debug=False)
         print(f"[Line Follow] Offset={offset:.2f}, Slope={slope:.2f}, Control={u:.3f}")
 
         if cv2.waitKey(1) & 0xFF == 27:  #press ESC

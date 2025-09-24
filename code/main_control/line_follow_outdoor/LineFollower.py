@@ -17,7 +17,7 @@ class LineFollower:
         self.motorR: Motor = motorR
         self.pid = PID(LineFollowConfig.KP, LineFollowConfig.KI, LineFollowConfig.KD)
         self.base_speed = LineFollowConfig.BASE_SPEED
-        self.offset_amplify = 0.3
+        self.offset_amplify = 0.4
 
     def set_offset_amplify(self, inp: float):
         return max(inp, self.offset_amplify * inp**3)
@@ -65,7 +65,7 @@ class LineFollower:
 
         # 斜率: 右下到左上 > 0；左下到右上 < 0
         avg_slope = slope_sum / total_dy if total_dy != 0 else 0
-        avg_slope += LineFollowConfig.SLOPE_CALIBRATION 
+        avg_slope += LineFollowConfig.SLOPE_CALIBRATION
         # 偏移: 左負右正
         avg_offset = offset_sum / total_dy
         avg_offset -= (LineFollowConfig.LINE_POSITION - 0.5) * w  # 調整基準
@@ -98,11 +98,11 @@ class LineFollower:
 
         return avg_slope, avg_offset, u
 
-    def follow(self, frame):
+    def follow(self, frame, debug=True):
         """
         執行循跡控制，更新馬達速度
         """
-        slope, offset, u = self.read_frame(frame)
+        slope, offset, u = self.read_frame(frame, debug=debug)
         if slope is None: slope = 0.0
         if offset is None: offset = 0.0
         if u is None: u = 0.0
