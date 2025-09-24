@@ -29,6 +29,11 @@ class FrameHub:
             self.result_available = True
             self.new_frame = False   # frame 已處理完
 
+    def del_result(self):
+        with self.lock:
+            self.result_available = False
+            self.result = []
+
     def get_result(self):
         with self.lock:
             ret = tuple()
@@ -57,7 +62,7 @@ class DetectorThread(threading.Thread):
         self.model = YOLO(configuration.model_path)
         self.limitDetect = False
         self.detect_objects = []
-        self.detect_confidence = 0.8
+        self.detect_confidence = 0.6
         return
 
     def set_detect_objects(self, objects: list):
@@ -68,6 +73,9 @@ class DetectorThread(threading.Thread):
     def set_min_confidence(self, confidence: float):
         self.detect_confidence = confidence
         return
+
+    def del_result(self):
+        self.hub.del_result()
 
     def run(self):
         while self.running:
@@ -81,7 +89,7 @@ class DetectorThread(threading.Thread):
                     for box in boxes:
                         # 將張量轉換為標量
                         label = self.model.names[int(box.cls.item())]
-                        if (self.limitDetect and label not in self.detect_objects) or box.conf.item() < self.detect_confidence:
+                        if ((self.limitDetect and label not in self.detect_objects) and False) or box.conf.item() < self.detect_confidence:
                             # 辨識到的物件不在需要辨識的物件範圍內，或是信心值不夠
                             continue
                         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
@@ -89,6 +97,7 @@ class DetectorThread(threading.Thread):
                         detect_boxes.append((x1, y1, x2-x1, y2-y1, label, confidence))
 
                 self.hub.set_result(detect_boxes)
+                print(detect_boxes)
             else:
                 time.sleep(0.01)  # 沒新 frame → 稍微休息
 

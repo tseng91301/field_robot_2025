@@ -11,13 +11,14 @@ Stepper myStepper2(STEPS_PER_RESOLUTION,A0,A2,A1,A3);//gray
 Weight weight(6, 5, -945);
 
 //裝飼料的use_feeder
-void use_feeder(float target_weight) {
+void use_feeder(int target_weight) {
+    switch(target_weight):
+        case 1: {
+
+        }
     myStepper1.step(-10000);    // Move the motor forward 9000 steps
     myStepper2.step(-2000);
-    float weight_got = weight.get_weight();
-    while (weight_got < target_weight) {
-        weight_got = weight.get_weight();
-    }
+    delay(3000);
     myStepper2.step(2000);
     myStepper1.step(10000);
 }

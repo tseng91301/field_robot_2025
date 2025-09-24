@@ -11,6 +11,13 @@ class Motor:
         self.command_byte = command_byte
         return
 
+    def turn_on(self, on: int):
+        # turn on 就是會轉
+        outp = bytearray()
+        outp.append(0xA3)
+        outp.append(int(on))
+        self.ser.send_command(outp)
+
     def set_speed(self, speed: int):
         speed = int(speed)
         if speed > 255:

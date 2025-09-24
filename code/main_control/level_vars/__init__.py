@@ -106,7 +106,7 @@ class Level3:
         self.move_speed = 1.0 # 往前的速度比例，隨著距離目標愈近要減速
         self.stop = False # 停止移動
         self.in_range_time = 0 # 辨識到在範圍內的次數
-        self.min_in_range_time = 5 # 辨識到 5 次在範圍內才能做下一個動作
+        self.min_in_range_time = 1 # 辨識到 5 次在範圍內才能做下一個動作
         self.animal_available = False # 是否可以餵食
         self.fed_animal = False # 是否完成餵食
         self.look_objects = []
@@ -117,6 +117,7 @@ class Level3:
         參考 Level2 的說明
         """
         if not self.animal_available:
+            # print(f"Animal: {inf[4]}")
             if inf[4] not in self.look_objects: return 0
 
             c = [inf[0] + inf[2] / 2, inf[1] + inf[3] / 2]

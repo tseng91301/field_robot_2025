@@ -35,6 +35,7 @@ uint8_t getDataLengthForCommand(uint8_t cmd) {
     switch (cmd) {
         case 0xA1: return 2;  // 左馬達速度
         case 0xA2: return 2;  // 右馬達速度
+        case 0xA3: return 1; // 馬達開關
         case 0xB1: return 4;  // 其他指令（範例）
         default: return 0;
     }
@@ -64,6 +65,19 @@ void processCommand(uint8_t cmd, uint8_t* data) {
             motorR->set_speed(speed);
             // Serial.print("Set Right Motor Speed: ");
             // Serial.println(speed);
+            break;
+        }
+        case 0xA3: {
+            uint8_t sign = data[0];
+            if(sign == 1) {
+                // motorL->set_speed(108);
+                // motorR->set_speed(100);
+                motorL->set_speed(79);
+                motorR->set_speed(73);
+            } else {
+                motorL->set_speed(0);
+                motorR->set_speed(0);
+            }
             break;
         }
         case 0xB1: {
