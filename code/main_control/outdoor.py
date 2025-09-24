@@ -6,17 +6,17 @@ from motor import Motor, DualMotor
 from serial_connection import Serial
 
 # --- PID 參數設定 ---
-kP = 0.7
+kP = 0.6
 kI = 0.001
 kD = 0.01
 
 LINE_OFFSET = 0
-SERIAL_SIMULATION_MODE = True
+SERIAL_SIMULATION_MODE = False
 
 pe, ie = 0.0, 0.0
 
 # --- 透視轉換比例座標 ---
-pts_src_config = np.float32([[0.0, 0.15], [1.0, 0.15], [0.0, 1.0], [1.0, 1.0]])
+pts_src_config = np.float32([[0.0, 0.25], [1.0, 0.25], [0.0, 1.0], [1.0, 1.0]])
 bird_width, bird_height = 600, 400
 pts_dst = np.float32([[0,0],[bird_width,0],[0,bird_height],[bird_width,bird_height]])
 
@@ -34,14 +34,14 @@ except Exception as e:
     motor_dual = None
 
 # --- Open Camera ---
-# cap = cv2.VideoCapture("/dev/webcam_outdoor")
-cap = cv2.VideoCapture("1757656904112.mp4")
+cap = cv2.VideoCapture("/dev/webcam_outdoor")
+#cap = cv2.VideoCapture("1757656904112.mp4")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 
 # -- 設定影像擷取高度比例 --
-FRAME_HEIGHT_CROP_RATE = 0.5
+FRAME_HEIGHT_CROP_RATE = 0.55
 
 # --- 設定影片輸出 ---
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -90,7 +90,7 @@ try:
                 x_center = (last_x_left + last_x_right)/2
             else:
                 x_left, x_right = xs[0], xs[-1]
-                if abs(x_left - x_right) < 25:
+                if abs(x_left - x_right) < 55:
                     last_x_dist = abs(last_x_left - last_x_right)
                     if abs(x_left - last_x_left) < abs(x_right - last_x_right):
                         x_center = x_left + last_x_dist // 2
@@ -139,7 +139,7 @@ try:
         out_frame.write(frame_crop)
         out_mask.write(mask_bird)
 
-        if cv2.waitKey(1) & 0xFF == 27:
+        if cv2.waitKey(1) & 0xFF == 27:  #press ESC
             break
 
 except Exception as e:

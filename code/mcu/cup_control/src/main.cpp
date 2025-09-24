@@ -1,20 +1,24 @@
 #include <Arduino.h>
 #include <Stepper.h>
+#include <Servo.h> 
 #include "weight.h"
 #include "led_output.h"
 
 #define STEPS_PER_RESOLUTION 2048
-Stepper myStepper(STEPS_PER_RESOLUTION, 8, 10, 9, 11);  // Initialize the stepper motor with 4 control pins
-
+Stepper myStepper1(STEPS_PER_RESOLUTION, 8, 10, 9, 11);  // Initialize the stepper motor with 4 control pins
+Stepper myStepper2(STEPS_PER_RESOLUTION,A0,A2,A1,A3);//gray
+//Servo myservo;  // 建立SERVO物件
 Weight weight(6, 5, -945);
 
 void use_feeder(float target_weight) {
-    myStepper.step(5000);    // Move the motor forward 9000 steps
+    myStepper1.step(-5000);    // Move the motor forward 9000 steps
+    myStepper2.step(-1600); 
     float weight_got = weight.get_weight();
     while (weight_got < target_weight) {
         weight_got = weight.get_weight();
     }
-    myStepper.step(-5000);
+    myStepper2.step(1600);
+    myStepper1.step(5000);
 }
 
 // Byte command handle
