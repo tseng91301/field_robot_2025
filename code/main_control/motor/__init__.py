@@ -17,7 +17,7 @@ class Motor:
             speed = 255
         elif speed < -255:
             speed = -255
-            
+
         if speed < 0 and self.no_negative_speed:
             speed = 0
 

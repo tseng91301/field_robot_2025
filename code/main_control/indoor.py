@@ -1,6 +1,7 @@
 import cv2
 
-from line_follow import LineFollower, StepCounter
+from line_follow import LineFollower
+from line_follow import StepCounter
 from object_detection import DetectorThread, FrameHub
 from motor import Motor, DualMotor
 from feeding_cup import FeedingCup
@@ -55,7 +56,7 @@ try:
     # initialize cup serial connection
     serial_cup = Serial(SERIAL_PORT_CUP, 115200, simulate=SERIAL_SIMULATION_MODE)
     serial_cup.print_results = DEBUG_MODE
-    cup = FeedingCup(serial_cup); cup.set_command_byte(0x00, 0xB2, 0xB1, 0xB3)
+    cup = FeedingCup(serial_cup); cup.set_command_byte(0x00, 0xB2, 0xB1, 0xB3,0xB4)
     print("✅ Serial cup connected")
     time.sleep(3)
     print("Finish Arduino Initialization")

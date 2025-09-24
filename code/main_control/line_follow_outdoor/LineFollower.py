@@ -21,8 +21,11 @@ class LineFollower:
         self.prev_avg_offset = 0.0
         self.prev_avg_slope = 0.0
 
-    def set_offset_amplify(self, inp: float):
-        return inp**3
+    def set_offset_amplify(self, inp: float, gamma: float):
+        outp = abs(inp**gamma)
+        if inp < 0:
+            outp *= -1
+        return outp
 
     def read_frame(self, frame, debug=True, return_frame = False):
         """
@@ -66,7 +69,7 @@ class LineFollower:
                 if dy != 0:
                     slope = (x2 - x1) / (y2 - y1)
                     slope_sum += slope * dy
-                offset_sum += (points[i][0] - w // 2) * dy
+                offset_sum += self.set_offset_amplify((points[i][0] - w // 2) * dy, 1.22)
                 total_dy += dy
 
             # 斜率: 右下到左上 > 0；左下到右上 < 0
@@ -75,7 +78,7 @@ class LineFollower:
             # 偏移: 左負右正
             avg_offset = offset_sum / total_dy
             avg_offset -= (LineFollowConfig.LINE_POSITION - 0.5) * w  # 調整基準
-            avg_offset = self.set_offset_amplify(avg_offset)
+            avg_offset = self.set_offset_amplify(avg_offset, 3)
 
             # 寫入記憶中，未來沒有偵測到現就用紀錄的值
             self.prev_avg_offset = avg_offset

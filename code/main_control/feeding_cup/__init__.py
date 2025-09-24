@@ -13,11 +13,12 @@ class FeedingCup:
         self.command_byte_led = 0x00
         return
 
-    def set_command_byte(self, command_byte_stepper: int, command_byte_led: int, read_byte: int, command_feed_byte: int):
+    def set_command_byte(self, command_byte_stepper: int, command_byte_led: int, read_byte: int, command_feed_byte: int,command_feed2_byte: int):
         self.command_byte_stepper = command_byte_stepper # 步進馬達指令發送的裝置代碼
         self.read_byte = read_byte # 查看重量的指令代碼
         self.command_byte_led = command_byte_led # 分類顯示 LED 的指令代碼
         self.command_feed_byte = command_feed_byte # 觸發飼料機的指令代碼
+        self.command_feed2_byte = command_feed2_byte # 觸發飼料機的指令代碼
         return
 
     def turn(self, step: int):

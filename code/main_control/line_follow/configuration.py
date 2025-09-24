@@ -52,8 +52,8 @@ class LineFollowConfig:
     KD = 60.0                # 微分增益
     INTEGRAL_CLAMP = 0.5     # 限制積分項的幅度（-0.5 ~ 0.5）
 
-    BASE_SPEED = 60         # 你的例子：兩輪基準速度 100
-    MAX_SPEED  = 100         # 馬達速度上限（含負值）
+    BASE_SPEED = 100         # 你的例子：兩輪基準速度 100
+    MAX_SPEED  = 140         # 馬達速度上限（含負值）
 
     # 平滑：保存最近 N 個角度/偏移
     SMOOTH_N = 5
@@ -62,7 +62,7 @@ class LineFollowConfig:
     NO_LINE_BRAKE = True     # True：煞停；False：維持基準速度直行或保留上次控制量
 
     # 視覺化除錯
-    SHOW_DEBUG = True
+    SHOW_DEBUG = False
 
 class StepCountConfig:
 

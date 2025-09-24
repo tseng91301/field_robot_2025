@@ -83,7 +83,7 @@ class LineFollower:
             cv2.imshow('Line Detect Result', img)
         return lines_filtered, lines_slope
 
-    def follow(self, frame):
+    def _follow(self, frame):
         # 定義需要回傳的值
         angle_avg, offset_avg, u = 0, 0, 0
         if not self.on:
@@ -142,7 +142,14 @@ class LineFollower:
             right_cmd = LineFollowConfig.BASE_SPEED
 
         # 下發馬達
-        self.motorL.set_speed(left_cmd)
-        self.motorR.set_speed(right_cmd)
+        # self.motorL.set_speed(left_cmd)
+        # self.motorR.set_speed(right_cmd)
+        self.motorL.set_speed(LineFollowConfig.BASE_SPEED)
+        self.motorR.set_speed(LineFollowConfig.BASE_SPEED)
 
         return angle_avg, offset_avg, u
+
+    def follow(self, frame):
+        self.motorL.set_speed(LineFollowConfig.BASE_SPEED+5)
+        self.motorR.set_speed(LineFollowConfig.BASE_SPEED)
+        return 0, 0, 0

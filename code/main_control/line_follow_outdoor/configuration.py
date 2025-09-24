@@ -21,7 +21,7 @@ class LineFollowConfig:
     VERTICAL_LINE_DEGREE = 35 # 垂直線角度誤差範圍
     HORIZONTAL_LINE_DEGREE = 25 # 水平線角度誤差範圍
 
-    LINE_POSITION = 0.3 # 紅線所在的基準 X 位置 (數字從左到右是 0.0 ~ 1.0)
+    LINE_POSITION = 0.45 # 紅線所在的基準 X 位置 (數字從左到右是 0.0 ~ 1.0)
     SLOPE_CALIBRATION = 0.23 # 算出來的斜率會加上這個數值
 
     # 紅線的 mask 邊界值
@@ -38,7 +38,7 @@ class LineFollowConfig:
     W_ANGLE  = 0.7           # 角度誤差權重
     W_OFFSET = 0.3           # 位置誤差權重（兩者加總為 1 較直覺）
 
-    KP = 0.0008               # 比例增益（可依車體/速度調整）
+    KP = 0.000045               # 比例增益（可依車體/速度調整）
     KI = 0.00                 # 積分增益（先從 0 開始，避免積分飄移）
     KD = 0.00                # 微分增益
     INTEGRAL_CLAMP = 1000.0     # 限制積分項的幅度（-0.5 ~ 0.5）

@@ -44,8 +44,11 @@ void processCommand(uint8_t cmd, uint8_t* data) {
     switch (cmd) {
         case 0xA1: {
             uint8_t sign = data[0];
+            if (sign != 0 && sign != 1) {
+                break;
+            }
             uint8_t abs_value = data[1];
-            int16_t speed = (sign == 0) ? abs_value : -abs_value;
+            int16_t speed = (sign == 0) ? abs_value : abs_value;
             motorL->set_speed(speed);
             // Serial.print("Set Left Motor Speed: ");
             // Serial.println(speed);
@@ -53,8 +56,11 @@ void processCommand(uint8_t cmd, uint8_t* data) {
         }
         case 0xA2: {
             uint8_t sign = data[0];
+            if (sign != 0 && sign != 1) {
+                break;
+            }
             uint8_t abs_value = data[1];
-            int16_t speed = (sign == 0) ? abs_value : -abs_value;
+            int16_t speed = (sign == 0) ? abs_value : abs_value;
             motorR->set_speed(speed);
             // Serial.print("Set Right Motor Speed: ");
             // Serial.println(speed);
@@ -121,8 +127,6 @@ void loop() {
             case WAIT_END:
                 if (read_byte == '\n') {
                     processCommand(command, dataBuffer);
-                } else {
-                    Serial.println("Invalid packet end");
                 }
                 parseState = WAIT_START;  // 重置
                 break;
