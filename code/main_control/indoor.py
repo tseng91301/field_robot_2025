@@ -152,6 +152,7 @@ try:
                 if level1.finish_looking and not level1.light_triggered:
                     obj = level1.manual_finish()
                     look_object_3 = [obj] # 設定第三關要看的東西
+                    level3.look_objects = [obj]
                     light_number = LOOK_OBJECTS_1.index(obj) + 1 # 指定要亮的燈號
                     print(f"Light Number: {light_number}")
                     line_follower.switch(False)
@@ -187,13 +188,13 @@ try:
                     level3.look_objects = look_object_3
 
             elif step_count.level == 3: # 動物飼料放置關卡
-                level2.frame_w = frame_object_detection.shape[1]
-                level2.frame_h = frame_object_detection.shape[0]
+                level3.frame_w = frame_object_detection.shape[1]
+                level3.frame_h = frame_object_detection.shape[0]
                 line_follower.switch(False if level3.stop else True)
                 if level3.animal_available and not level3.fed_animal:
                     print("Level3: Feeding...")
                     line_follower.switch(False)
-                    obj = level1.manual_finish()
+                    obj = level1.manual_finish() #notice
                     light_number = LOOK_OBJECTS_1.index(obj) + 1
                     cup.set_animal_led_wait(light_number, 3) # 讓 arduino 亮燈
                     time.sleep(3)# 之後更改成餵養動物的程式
