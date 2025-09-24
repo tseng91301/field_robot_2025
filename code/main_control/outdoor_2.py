@@ -30,8 +30,8 @@ except Exception as e:
 line_follower = LineFollower(motorL, motorR)
 
 # --- Open Camera ---
-# cap = cv2.VideoCapture("/dev/webcam_outdoor")
-cap = cv2.VideoCapture("video/test_outdoor/left-1.mp4")
+cap = cv2.VideoCapture("/dev/webcam_outdoor")
+# cap = cv2.VideoCapture("video/test_outdoor/left-1.mp4")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
