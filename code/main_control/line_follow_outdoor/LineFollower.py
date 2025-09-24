@@ -24,7 +24,7 @@ class LineFollower:
     def set_offset_amplify(self, inp: float):
         return inp**3
 
-    def read_frame(self, frame, debug=True):
+    def read_frame(self, frame, debug=True, return_frame = False):
         """
         1. 擷取 ROI + 透視校正
         2. 做紅色遮罩
@@ -40,6 +40,7 @@ class LineFollower:
         mask = red_mask_hsv(roi)
 
         h, w = mask.shape
+        print(f"h: {h}, w: {w}")
         points = []
 
         # --- 掃描紅線平均位置 ---
@@ -86,34 +87,40 @@ class LineFollower:
         u = self.pid.step(avg_offset)
 
         # --- Debug 顯示 ---
+        roi_debug = roi.copy()
+        roi_debug = roi_debug if len(roi_debug.shape)==3 else cv2.cvtColor(roi_debug, cv2.COLOR_GRAY2BGR)
+        # 畫每個掃描點
+        for x, y in points:
+            cv2.circle(roi_debug, (x, y), 3, (0, 255, 0), -1)
+
+        # 畫平均 offset 線 (垂直線)
+        avg_x = int(w//2 + avg_offset)
+        cv2.line(roi_debug, (avg_x, 0), (avg_x, h-1), (255, 0, 0), 2)
+
+        # 畫平均斜率線 (過 avg_x, roi 中心 y)
+        y_center = h//2
+        x1_line = int(avg_x - avg_slope * y_center)
+        x2_line = int(avg_x + avg_slope * y_center)
+        cv2.line(roi_debug, (x1_line, 0), (x2_line, h-1), (0, 0, 255), 2)
+
+        # 顯示影像
         if debug:
-            roi_debug = roi.copy()
-            roi_debug = roi_debug if len(roi_debug.shape)==3 else cv2.cvtColor(roi_debug, cv2.COLOR_GRAY2BGR)
-            # 畫每個掃描點
-            for x, y in points:
-                cv2.circle(roi_debug, (x, y), 3, (0, 255, 0), -1)
-
-            # 畫平均 offset 線 (垂直線)
-            avg_x = int(w//2 + avg_offset)
-            cv2.line(roi_debug, (avg_x, 0), (avg_x, h-1), (255, 0, 0), 2)
-
-            # 畫平均斜率線 (過 avg_x, roi 中心 y)
-            y_center = h//2
-            x1_line = int(avg_x - avg_slope * y_center)
-            x2_line = int(avg_x + avg_slope * y_center)
-            cv2.line(roi_debug, (x1_line, 0), (x2_line, h-1), (0, 0, 255), 2)
-
-            # 顯示影像
             cv2.imshow("ROI Debug", roi_debug)
             cv2.imshow("Mask", mask)
+        if return_frame:
+            return avg_slope, avg_offset, u, mask, roi_debug
 
         return avg_slope, avg_offset, u
 
-    def follow(self, frame, debug=True):
+    def follow(self, frame, debug=True, return_frame = False):
         """
         執行循跡控制，更新馬達速度
         """
-        slope, offset, u = self.read_frame(frame, debug=debug)
+        if not return_frame:
+            slope, offset, u = self.read_frame(frame, debug=debug)
+        else:
+            slope, offset, u, mask, roi_debug = self.read_frame(frame, debug=debug)
+        
         if slope is None: slope = 0.0
         if offset is None: offset = 0.0
         if u is None: u = 0.0
@@ -126,4 +133,6 @@ class LineFollower:
         self.motorL.set_speed(left_speed)
         self.motorR.set_speed(right_speed)
 
+        if return_frame:
+            return slope, offset, u, mask, roi_debug
         return slope, offset, u
