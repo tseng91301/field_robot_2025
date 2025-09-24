@@ -9,12 +9,7 @@ from line_follow_outdoor import LineFollower
 
 SERIAL_SIMULATION_MODE = False
 SHOW_FRAME = False
-
-
-# --- 透視轉換比例座標 ---
-pts_src_config = np.float32([[0.0, 0.25], [1.0, 0.25], [0.0, 1.0], [1.0, 1.0]])
-bird_width, bird_height = 600, 400
-pts_dst = np.float32([[0,0],[bird_width,0],[0,bird_height],[bird_width,bird_height]])
+RECORD_FRAME = True
 
 # --- Arduino Serial Setup ---
 try:
@@ -40,17 +35,30 @@ cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
 FRAME_HEIGHT_CROP_RATE = 0.55
 
 # --- 設定影片輸出 ---
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-fps = 20
+if RECORD_FRAME:
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = 20
+    frame_width, frame_height = 200, 240  # 因為只取下半影像
+    out_frame = cv2.VideoWriter('output/video/outdoor_output_frame.mp4', fourcc, fps, (frame_width, frame_height))
+    out_mask = cv2.VideoWriter('output/video/outdoor_output_mask.mp4', fourcc, fps, (frame_width, frame_height), isColor=False)
+    if not out_frame.isOpened() or not out_mask.isOpened():
+        raise RuntimeError("VideoWriter failed to open. Check path, codec and frame size!")
 
 try:
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-
-        slope, offset, u = line_follower.follow(frame, debug=SHOW_FRAME)
+        
+        if RECORD_FRAME:
+            slope, offset, u, mask, roi_debug = line_follower.follow(frame, debug=SHOW_FRAME, return_frame=RECORD_FRAME)
+        else:
+            slope, offset, u = line_follower.follow(frame, debug=SHOW_FRAME)
         print(f"[Line Follow] Offset={offset:.2f}, Slope={slope:.2f}, Control={u:.3f}")
+
+        if RECORD_FRAME:
+            out_frame.write(roi_debug)
+            out_mask.write(mask)
 
         if cv2.waitKey(1) & 0xFF == 27:  #press ESC
             break
@@ -71,6 +79,9 @@ finally:
     print("🧹 Releasing resources...")
     cap.release()
     cv2.destroyAllWindows()
+    if RECORD_FRAME:
+        out_frame.release()
+        out_mask.release()
     if serial_motor:
         serial_motor.close()
     print("✅ Finished and saved videos.")

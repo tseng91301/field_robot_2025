@@ -40,7 +40,7 @@ class LineFollower:
         mask = red_mask_hsv(roi)
 
         h, w = mask.shape
-        print(f"h: {h}, w: {w}")
+        # print(f"h: {h}, w: {w}")
         points = []
 
         # --- 掃描紅線平均位置 ---
@@ -119,7 +119,7 @@ class LineFollower:
         if not return_frame:
             slope, offset, u = self.read_frame(frame, debug=debug)
         else:
-            slope, offset, u, mask, roi_debug = self.read_frame(frame, debug=debug)
+            slope, offset, u, mask, roi_debug = self.read_frame(frame, debug=debug, return_frame=return_frame)
         
         if slope is None: slope = 0.0
         if offset is None: offset = 0.0
