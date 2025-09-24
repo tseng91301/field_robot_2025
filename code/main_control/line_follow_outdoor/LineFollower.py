@@ -17,10 +17,12 @@ class LineFollower:
         self.motorR: Motor = motorR
         self.pid = PID(LineFollowConfig.KP, LineFollowConfig.KI, LineFollowConfig.KD)
         self.base_speed = LineFollowConfig.BASE_SPEED
-        self.offset_amplify = 0.4
+
+        self.prev_avg_offset = 0.0
+        self.prev_avg_slope = 0.0
 
     def set_offset_amplify(self, inp: float):
-        return max(inp, self.offset_amplify * inp**3)
+        return inp**3
 
     def read_frame(self, frame, debug=True):
         """
@@ -48,28 +50,37 @@ class LineFollower:
                 points.append((x_mean, y))
 
         if len(points) < 2:
-            return None, None, None
+            cal_line = False
+        else:
+            cal_line = True
 
-        # --- 計算斜率 & 偏移 ---
-        slope_sum = 0.0
-        offset_sum = 0.0
-        total_dy = 0
-        for i in range(len(points)-1):
-            (x1, y1), (x2, y2) = points[i], points[i+1]
-            dy = abs(y2 - y1)
-            if dy != 0:
-                slope = (x2 - x1) / (y2 - y1)
-                slope_sum += slope * dy
-            offset_sum += (points[i][0] - w // 2) * dy
-            total_dy += dy
+        if cal_line:
+            # --- 計算斜率 & 偏移 ---
+            slope_sum = 0.0
+            offset_sum = 0.0
+            total_dy = 0
+            for i in range(len(points)-1):
+                (x1, y1), (x2, y2) = points[i], points[i+1]
+                dy = abs(y2 - y1)
+                if dy != 0:
+                    slope = (x2 - x1) / (y2 - y1)
+                    slope_sum += slope * dy
+                offset_sum += (points[i][0] - w // 2) * dy
+                total_dy += dy
 
-        # 斜率: 右下到左上 > 0；左下到右上 < 0
-        avg_slope = slope_sum / total_dy if total_dy != 0 else 0
-        avg_slope += LineFollowConfig.SLOPE_CALIBRATION
-        # 偏移: 左負右正
-        avg_offset = offset_sum / total_dy
-        avg_offset -= (LineFollowConfig.LINE_POSITION - 0.5) * w  # 調整基準
-        avg_offset = self.set_offset_amplify(avg_offset)
+            # 斜率: 右下到左上 > 0；左下到右上 < 0
+            avg_slope = slope_sum / total_dy if total_dy != 0 else 0
+            avg_slope += LineFollowConfig.SLOPE_CALIBRATION
+            # 偏移: 左負右正
+            avg_offset = offset_sum / total_dy
+            avg_offset -= (LineFollowConfig.LINE_POSITION - 0.5) * w  # 調整基準
+            avg_offset = self.set_offset_amplify(avg_offset)
+
+            # 寫入記憶中，未來沒有偵測到現就用紀錄的值
+            self.prev_avg_offset = avg_offset
+            self.prev_avg_slope = avg_slope
+        else:
+            avg_slope, avg_offset = self.prev_avg_slope, self.prev_avg_offset
 
         # PID 控制
         u = self.pid.step(avg_offset)

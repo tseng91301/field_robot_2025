@@ -7,7 +7,8 @@ from serial_connection import Serial
 
 from line_follow_outdoor import LineFollower
 
-SERIAL_SIMULATION_MODE = True
+SERIAL_SIMULATION_MODE = False
+SHOW_FRAME = False
 
 
 # --- 透視轉換比例座標 ---
@@ -29,8 +30,8 @@ except Exception as e:
 line_follower = LineFollower(motorL, motorR)
 
 # --- Open Camera ---
-cap = cv2.VideoCapture("/dev/webcam_outdoor")
-# cap = cv2.VideoCapture("video/test_outdoor/right-1.mp4")
+# cap = cv2.VideoCapture("/dev/webcam_outdoor")
+cap = cv2.VideoCapture("video/test_outdoor/left-1.mp4")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
@@ -48,7 +49,7 @@ try:
         if not ret:
             break
 
-        slope, offset, u = line_follower.follow(frame, debug=False)
+        slope, offset, u = line_follower.follow(frame, debug=SHOW_FRAME)
         print(f"[Line Follow] Offset={offset:.2f}, Slope={slope:.2f}, Control={u:.3f}")
 
         if cv2.waitKey(1) & 0xFF == 27:  #press ESC
