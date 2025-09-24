@@ -7,20 +7,31 @@
 #define STEPS_PER_RESOLUTION 2048
 Stepper myStepper1(STEPS_PER_RESOLUTION, 8, 10, 9, 11);  // Initialize the stepper motor with 4 control pins
 Stepper myStepper2(STEPS_PER_RESOLUTION,A0,A2,A1,A3);//gray
-//Servo myservo;  // 建立SERVO物件
+Servo myservo;  // 建立SERVO物件
 Weight weight(6, 5, -945);
 
+//裝飼料的use_feeder
 void use_feeder(float target_weight) {
-    myStepper1.step(-5000);    // Move the motor forward 9000 steps
-    myStepper2.step(-1600); 
+    myStepper1.step(-10000);    // Move the motor forward 9000 steps
+    myStepper2.step(-2000); 
     float weight_got = weight.get_weight();
     while (weight_got < target_weight) {
         weight_got = weight.get_weight();
     }
-    myStepper2.step(1600);
-    myStepper1.step(5000);
+    myStepper2.step(2000);
+    myStepper1.step(10000);
 }
 
+//倒飼料的use_feeder
+void use_feeder() {
+    myStepper1.step(-10000);    // Move the motor forward 9000 steps
+    myStepper2.step(-2000); 
+    myservo.write(0);  //旋轉到0度，就是一般所說的歸零
+    delay(1000);
+    myservo.write(90); //旋轉到90度
+    myStepper2.step(10000);
+    myStepper1.step(2000);
+}
 // Byte command handle
 
 #define START_BYTE 0xFF

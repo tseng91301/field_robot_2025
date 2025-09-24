@@ -83,11 +83,11 @@ class FeedingCup:
             # 如果沒有正在跑的 loop，就自己開一個
             asyncio.run(task())
 
-    def set_animal_led_wait(self, color: int):
+    def set_animal_led_wait(self, color: int, time_delay=2):
         outp = bytearray([self.command_byte_led, color])
         self.ser.send_command(outp)
 
-        time.sleep(2)
+        time.sleep(time_delay)
 
         outp = bytearray([self.command_byte_led, 0])
         self.ser.send_command(outp)

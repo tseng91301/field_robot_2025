@@ -35,7 +35,7 @@ CAMERA_INDOOR_PATH = "/dev/webcam_indoor"
 LOOK_OBJECTS_1 = ["chick", "pig", "cow"]
 LOOK_OBJECTS_2 = ["machine"]
 look_object_3 = [""] # 依據第一關看到的東西去設定
-ANIMAL_FEEDING_WEIGHT = {"chick": 50, "pig": 75, "cow": 100} # 每一種動物需要的飼料重量
+ANIMAL_FEEDING_WEIGHT = {"chick": 75, "pig": 155, "cow": 205} # 每一種動物需要的飼料重量
 
 # 定義每個關卡的特定變數和功能
 level1 = Level1(); level1.look_objects = LOOK_OBJECTS_1
@@ -193,7 +193,10 @@ try:
                 if level3.animal_available and not level3.fed_animal:
                     print("Level3: Feeding...")
                     line_follower.switch(False)
-                    time.sleep(3) # 之後更改成餵養動物的程式
+                    obj = level1.manual_finish()
+                    light_number = LOOK_OBJECTS_1.index(obj) + 1
+                    cup.set_animal_led_wait(light_number, 3) # 讓 arduino 亮燈
+                    time.sleep(3)# 之後更改成餵養動物的程式
                     line_follower.switch(True)
                     level3.fed_animal = True
                     print("Feed successfully!")
